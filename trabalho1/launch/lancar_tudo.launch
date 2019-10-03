@@ -1,0 +1,11 @@
+<launch>
+
+<!--No da tartaruga-->
+<node name="turtlesim_node" pkg="turtlesim" type="turtlesim_node" output="screen">
+</node>
+
+<!--No do controle de posicao da tartaruga-->
+<node name="controla_tartaruga" pkg="trabalho1" type="set_position_node" output="screen">
+</node>
+
+</launch>

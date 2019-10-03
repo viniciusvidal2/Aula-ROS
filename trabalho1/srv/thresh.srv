@@ -1,0 +1,4 @@
+float32 thresh
+float32 vel
+---
+string alerta
