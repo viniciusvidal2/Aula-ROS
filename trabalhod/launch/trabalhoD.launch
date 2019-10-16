@@ -1,0 +1,18 @@
+<launch>
+	<arg name="nome" default="guiabp"/>
+	<arg name="x" default="2"/>
+	<arg name="y" default="2"/>
+        <arg name="theta" default="0"/>
+	
+	<node 	pkg="turtlesim"
+		type="turtlesim_node"
+		name="simulador" >
+           <remap from="turtle1" to="$(arg nome)"/>
+	</node>
+        <node
+                pkg="trabalhod"
+		type="TrabD.py"
+                name="controle_trajetoria"
+                args="$(arg x) $(arg y) $(arg theta) $(arg nome)">
+        </node>
+</launch>
