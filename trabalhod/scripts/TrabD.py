@@ -6,6 +6,7 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from turtlesim.msg import Pose
 from math import sqrt, pow, atan2
+import numpy as np
 
 x_g  = 0
 y_g  = 0
@@ -13,7 +14,8 @@ th_g = 0
 
 nome = "turtle1"
 
-tolerancia = 0.3
+tolerancia = 0.5
+toleranciaTh = 0.3
 
 def callback(data):
     x_r  = data.x
@@ -28,7 +30,7 @@ def callback(data):
 
 #    rospy.loginfo("rho: %f, x_r: %f, y_r: %f", rho, x_r, y_r)
 
-    gamma = atan2(dy,dx)
+    gamma = np.arctan2(dy,dx)
     alpha = gamma - th_r
     beta  = th_g - gamma
     rospy.loginfo("gamma: %f, alpha: %f, beta: %f", gamma, alpha, beta)
@@ -38,7 +40,7 @@ def callback(data):
     vel_msg.linear.z  = 0
     vel_msg.angular.x = 0
     vel_msg.angular.y = 0
-    vel_msg.angular.z = 2*alpha + 0.1*beta
+    vel_msg.angular.z = 2*alpha - 5*beta
 
     #rospy.loginfo("w: %f, gamma: %f, alpha: %f, beta: %f, th_r: %f, th_g: %f", vel_msg.angular.z, gamma, alpha, beta, th_r, th_g)
 #    rospy.loginfo("x_g: %f, y_g: %f, th_g: %f", x_g, y_g, th_g)
@@ -46,7 +48,7 @@ def callback(data):
     global nome
     pub = rospy.Publisher("/"+nome+"/cmd_vel", Twist, queue_size=1)
 
-    if rho > tolerancia:
+    if rho > tolerancia or abs(th_g - th_r) > toleranciaTh:
         pub.publish(vel_msg)
 
     
