@@ -48,7 +48,7 @@ def Odometria(data):
     x_r = data.pose.pose.position.x
     y_r = data.pose.pose.position.y
     t_r = np.arctan2(2*data.pose.pose.orientation.w*data.pose.pose.orientation.z,1-2*data.pose.pose.orientation.z*data.pose.pose.orientation.z)
-    rospy.loginfo("Xg: %.2f   Yg: %.2f  Xr: %.2f   Yr: %.2f   Tr:%.2f", x_g, y_g, x_r, y_r, t_r)
+    #rospy.loginfo("Xg: %.2f   Yg: %.2f  Xr: %.2f   Yr: %.2f   Tr:%.2f", x_g, y_g, x_r, y_r, t_r)
 
 # Controle de posicao para chegar onde a porta esta
 def controle():
@@ -72,7 +72,7 @@ def controle():
 
  
 
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(1)
 
     vel_msg = Twist()
 
@@ -99,10 +99,16 @@ def controle():
         vel_msg.angular.z = Kh*alpha #- 5*beta
 
         #rospy.loginfo("Velocidade linear: %.2f   Velocidade angular: %.2f", Kp*rho, -Kh*alpha)
+        rospy.loginfo("Rho: %.2f", rho)
 
         if rho > 0.5:
             pub.publish(vel_msg)
-            #rate.sleep()
+            rate.sleep()
+        else:
+            vel_msg.angular.z = 0
+            vel_msg.linear.x = 0
+            pub.publish(vel_msg)
+            rate.sleep()
 
 
 if __name__ == '__main__':
