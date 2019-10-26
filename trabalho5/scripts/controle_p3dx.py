@@ -8,7 +8,6 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
 
-
 tolerancia = 0.5
 toleranciaTh = 0.3
 
@@ -22,6 +21,7 @@ def Laser(data):
         if len(leituras) > 10:
             angulos  = np.where(leituras > data.range_max)
             angulos  = angulos - 180*np.ones(len(angulos))
+            print(angulos)
 
             distancia_minima = leituras[int(angulos[0][ 0] - 1 + 180)]
             distancia_maxima = leituras[int(angulos[0][-1] + 1 + 180)]
@@ -32,12 +32,25 @@ def Laser(data):
             global angulo
             angulo = (angulo_minimo + angulo_maximo)/2 * np.pi/180.0
      
-            x_g = np.sin(angulo)*distancia + 0.85
-            y_g = np.cos(angulo)*distancia - 0.75
+            if angulo >= 0 and angulo < np.pi/2:                         #    0 <= angulo <  90
+                x_g = np.cos(angulo)*distancia #+ 0.85
+                y_g = np.sin(angulo)*distancia #- 0.75
+            elif angulo >= np.pi/2 and angulo <= np.pi:                  #   90 <= angulo < 180
+                x_g = -np.sin(angulo - np.pi/2)*distancia
+                y_g =  np.cos(angulo - np.pi/2)*distancia
+            elif angulo < -np.pi/2 and angulo >= -np.pi:                 # -180 <= angulo < -90 
+                x_g = -np.sin( np.abs(angulo + np.pi/2) )*distancia
+                y_g = -np.cos( np.abs(angulo + np.pi/2) )*distancia
+            else:                                                        #  -90 <= angulo <   0
+                x_g =  np.cos( np.abs(angulo) )*distancia
+                y_g = -np.sin( np.abs(angulo) )*distancia
+
+            #rospy.loginfo("Dist minimo: %.1f", distancia_minima)
+            #rospy.loginfo("Dist maximo: %.1f", distancia_maxima)
 
             #rospy.loginfo("Angulo minimo: %.1f", angulo_minimo)
             #rospy.loginfo("Angulo maximo: %.1f", angulo_maximo)
-            #rospy.loginfo("xg: %.2f   yg: %.2f   distancia min: %.2f  distancia max: %.2f", x_g, y_g, distancia_minima, distancia_maxima)
+            rospy.loginfo("xg: %.2f   yg: %.2f", x_g, y_g)
 
             ja_calc_objetivo = True
 
@@ -70,20 +83,18 @@ def controle():
     
     pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
 
- 
-
-    rate = rospy.Rate(1)
+    rate = rospy.Rate(10)
 
     vel_msg = Twist()
 
     # Ganhos
-    Kp = 0.1
-    Kh = 0.5
+    Kp = 0.01
+    Kh = 2.5
     while not rospy.is_shutdown():
         dx  = x_g - x_r
         dy  = y_g - y_r
         rho = sqrt(dx**2 + dy**2)
-        #rospy.loginfo("xg: %.2f   yg: %.2f    xr: %.2f   yr: %.2f", x_g, y_g, x_r, y_r)
+        rospy.loginfo("xg: %.2f   yg: %.2f    xr: %.2f   yr: %.2f", x_g, y_g, x_r, y_r)
 
         #gamma = np.arctan2(dy,dx)
         #alpha = gamma - t_r
@@ -100,8 +111,9 @@ def controle():
 
         #rospy.loginfo("Velocidade linear: %.2f   Velocidade angular: %.2f", Kp*rho, -Kh*alpha)
         rospy.loginfo("Rho: %.2f", rho)
+        #rospy.loginfo("Alpha: %.2f  t_r: %.2f  angulo: %.2f", alpha, t_r, angulo)
 
-        if rho > 0.5:
+        if rho > 1:
             pub.publish(vel_msg)
             rate.sleep()
         else:
