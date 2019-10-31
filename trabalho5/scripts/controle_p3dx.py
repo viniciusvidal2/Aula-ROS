@@ -14,24 +14,66 @@ toleranciaTh = 0.3
 # Definir objetivo com o laser, onde a porta esta
 def Laser(data):
     global ja_calc_objetivo
-    global x_g, y_g
+    global x_g, y_g, angulo, G
+    global x_r, y_r, t_r
 
+    #Ganhos (campos potenciais)
+    Katt = 0.001 # cte de forca atrativa
+    Krep = 0.001 # cte de forca repulsiva
+    Eps = 0.0 # Distancia do robo ao objetivo
+    Ep0 = 2.0 # Cte do horizonte de eventos [m]
+    deltaD = 0.01 # Distancia a ser caminhada na direcao
+    #ksi = raio da bola de convergencia  
+    ksi = 0.1 # Quanto menor ksi -> Mais preciso
+
+    FrepX = 0 # Forca repulsiva inicial
+    FrepY = 0
+    vmax = 50 # Velocidade maxima do robo
+    # Constante da velocidade angular
+    Kw = 0.1
+
+    pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
+
+    rate = rospy.Rate(10)
+
+    vel_msg = Twist()
+
+    leituras = np.array(data.ranges)
     if not ja_calc_objetivo:
-        leituras = np.array(data.ranges)
         if len(leituras) > 10:
             angulos  = np.where(leituras > data.range_max)
-            angulos  = angulos - 180*np.ones(len(angulos))
-            print(angulos)
-
-            distancia_minima = leituras[int(angulos[0][ 0] - 1 + 180)]
-            distancia_maxima = leituras[int(angulos[0][-1] + 1 + 180)]
+            angulos  = angulos - 180*np.ones(len(angulos[0]))
+            #print(len(angulos[0]))
+            #print(angulos)
+            Indice_distancia_minima = int(angulos[0][ 0] - 1 + 180)
+            if Indice_distancia_minima < 0:
+                Indice_distancia_minima = 0
+                distancia_minima = leituras[Indice_distancia_minima]
+            else:
+                distancia_minima = leituras[Indice_distancia_minima]
+	        # A conta -1 + 180 eh feita para pegar um indice antes daquele em que o valor consta como infinito e o 180 soma para fazer um
+            # offset no vetor que varia de -180 a 180 para ele variar de 0 a 360
+            Indice_distancia_maxima = int(angulos[0][-1] + 1 + 180)
+            if Indice_distancia_maxima > 359:
+                Indice_distancia_maxima = 359
+                distancia_maxima = leituras[Indice_distancia_maxima]
+            else:
+                distancia_maxima = leituras[Indice_distancia_maxima]
+	        #[-1] se refere ao indice final, equivalente ao end no matlab
             distancia        = (distancia_minima + distancia_maxima)/2
+	        #print(distancia_minima)
+	        #print(distancia_maxima)
+ 	        #print(data.range_max)
+    	    #print(leituras)
+	        #print(angulos)
+	        #print(angulos[0][0]-1 + 180)
+	        #print(angulos[0][-1]+1+ 180) 
 
             angulo_minimo = np.min(angulos)
             angulo_maximo = np.max(angulos)
-            global angulo
-            angulo = (angulo_minimo + angulo_maximo)/2 * np.pi/180.0
+            angulo        = (angulo_minimo + angulo_maximo)/2 * np.pi/180.0
      
+   	        # Adaptacao para sinais certos em cada quadrante
             if angulo >= 0 and angulo < np.pi/2:                         #    0 <= angulo <  90
                 x_g = np.cos(angulo)*distancia #+ 0.85
                 y_g = np.sin(angulo)*distancia #- 0.75
@@ -45,15 +87,88 @@ def Laser(data):
                 x_g =  np.cos( np.abs(angulo) )*distancia
                 y_g = -np.sin( np.abs(angulo) )*distancia
 
-            #rospy.loginfo("Dist minimo: %.1f", distancia_minima)
+	        #rospy.loginfo("Dist minimo: %.1f", distancia_minima)
             #rospy.loginfo("Dist maximo: %.1f", distancia_maxima)
 
             #rospy.loginfo("Angulo minimo: %.1f", angulo_minimo)
             #rospy.loginfo("Angulo maximo: %.1f", angulo_maximo)
-            rospy.loginfo("xg: %.2f   yg: %.2f", x_g, y_g)
+            #rospy.loginfo("xg: %.2f   yg: %.2f", x_g, y_g)
 
             ja_calc_objetivo = True
 
+
+    #Posicao atual do robo
+    Pr = np.array([[x_r], [y_r]])
+    #Distancia entre Pr e G
+    DPG = Pr - G
+    DPGt = DPG.transpose()
+    Dpgg = DPGt[0][0]*DPG[0][0] + DPGt[0][1]*DPG[1][0] # Produto das matrizes (Transposta*normal)
+    Dpg = np.sqrt(Dpgg)
+    #print(Dpg)
+
+    if Dpg > ksi and ja_calc_objetivo is True:
+        # Calcula a forca de atracao
+        Fatt = -Katt*(Pr - G)
+        # Definicao das distancias
+        Eps = leituras
+        # Pontos do obstaculo dentro do horizonte de seguranca
+        indices = np.where(Eps < Ep0)
+        Indices = indices[0]
+        #print(Indices)
+        #print(len(Indices))
+        #print(Ep0)
+
+        # Verifica se nao ha obstaculos no horizonte de eventos
+        if len(Indices) == 0:
+            FrepX = 0
+            FrepY = 0
+        else:
+            # Calculo da forca repulsiva
+            for k in range(len(Indices)):
+                x_obstaculo = leituras[Indices[k]]
+                y_obstaculo = leituras[Indices[k]]
+                #print(Indices[k])
+                #print(leituras[Indices[k]])
+                Termo1 = Krep*(1/((Eps[Indices[k]]*Eps[Indices[k]]*Eps[Indices[k]])))
+                Termo2 = ((1/Ep0)-(1/Eps[Indices[k]]))
+                Termo3X = Pr[0]-x_obstaculo
+                Termo3Y = Pr[1]-y_obstaculo
+                FrepX = FrepX + Termo1*Termo2*Termo3X
+                FrepY = FrepY + Termo1*Termo2*Termo3Y
+                #print(FrepX)
+                #print(FrepY)
+        
+        # Forca total
+        FtotX = Fatt[0] + FrepX
+        FtotY = Fatt[1] + FrepY
+        #print(FtotX)
+        #print(FtotY)
+        # Definicao do subobjetivo
+        v = np.min(np.sqrt(FtotX*FtotX + FtotY*FtotY),vmax)
+        print(v)
+        ang = Kw*(180.0/np.pi*(np.arctan2(FtotY,FtotX)-t_r))
+        print(ang)
+        
+        vel_msg.linear.x  = v
+        vel_msg.linear.y  = 0
+        vel_msg.linear.z  = 0
+        vel_msg.angular.x = 0
+        vel_msg.angular.y = 0
+        vel_msg.angular.z = ang
+
+        pub.publish(vel_msg)
+        rate.sleep()
+    else:
+        # Para o robo ao chegar ao objetivo
+        vel_msg.linear.x  = 0
+        vel_msg.linear.y  = 0
+        vel_msg.linear.z  = 0
+        vel_msg.angular.x = 0
+        vel_msg.angular.y = 0
+        vel_msg.angular.z = 0
+        pub.publish(vel_msg)
+        #rate.sleep()
+	    
 # Ler a odometria e dar o tom a partir dela do que fazer
 def Odometria(data):
     global x_r, y_r, t_r
@@ -66,6 +181,7 @@ def Odometria(data):
 # Controle de posicao para chegar onde a porta esta
 def controle():
     global ja_calc_objetivo
+    global G
     ja_calc_objetivo = False
 
     global x_g, y_g, angulo
@@ -75,53 +191,55 @@ def controle():
     x_r = 0
     y_r = 0   
     t_r = 0
+    G = 0
     angulo = 0
 
     rospy.init_node('controle_p3dx', anonymous=False)
     rospy.Subscriber("/scan", LaserScan, Laser    , queue_size=1)
     rospy.Subscriber("/odom", Odometry , Odometria, queue_size=1)
     
-    pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
+    # pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
 
-    rate = rospy.Rate(10)
+    # rate = rospy.Rate(10)
 
-    vel_msg = Twist()
+    # vel_msg = Twist()
 
-    # Ganhos
-    Kp = 0.01
-    Kh = 2.5
-    while not rospy.is_shutdown():
-        dx  = x_g - x_r
-        dy  = y_g - y_r
-        rho = sqrt(dx**2 + dy**2)
-        rospy.loginfo("xg: %.2f   yg: %.2f    xr: %.2f   yr: %.2f", x_g, y_g, x_r, y_r)
+    # #Ganhos
+    # Kp = 0.01
+    # Kh = 2.5
 
-        #gamma = np.arctan2(dy,dx)
-        #alpha = gamma - t_r
-        #beta  = th_g - gamma
+    # while not rospy.is_shutdown():
+    #     dx  = x_g - x_r
+    #     dy  = y_g - y_r
+    #     rho = sqrt(dx**2 + dy**2)
+    #     #rospy.loginfo("xg: %.2f   yg: %.2f    xr: %.2f   yr: %.2f", x_g, y_g, x_r, y_r)
 
-        alpha = angulo - t_r
+    #     #gamma = np.arctan2(dy,dx)
+    #     #alpha = gamma - t_r
+    #     #beta  = th_g - gamma
 
-        vel_msg.linear.x  = Kp*rho
-        vel_msg.linear.y  = 0
-        vel_msg.linear.z  = 0
-        vel_msg.angular.x = 0
-        vel_msg.angular.y = 0
-        vel_msg.angular.z = Kh*alpha #- 5*beta
+    #     alpha = angulo - t_r
 
-        #rospy.loginfo("Velocidade linear: %.2f   Velocidade angular: %.2f", Kp*rho, -Kh*alpha)
-        rospy.loginfo("Rho: %.2f", rho)
-        #rospy.loginfo("Alpha: %.2f  t_r: %.2f  angulo: %.2f", alpha, t_r, angulo)
+    #     vel_msg.linear.x  = Kp*rho
+    #     vel_msg.linear.y  = 0
+    #     vel_msg.linear.z  = 0
+    #     vel_msg.angular.x = 0
+    #     vel_msg.angular.y = 0
+    #     vel_msg.angular.z = Kh*alpha #- 5*beta
 
-        if rho > 1:
-            pub.publish(vel_msg)
-            rate.sleep()
-        else:
-            vel_msg.angular.z = 0
-            vel_msg.linear.x = 0
-            pub.publish(vel_msg)
-            rate.sleep()
+    #     #rospy.loginfo("Velocidade linear: %.2f   Velocidade angular: %.2f", Kp*rho, -Kh*alpha)
+    #     #rospy.loginfo("Rho: %.2f", rho)
+    #     #rospy.loginfo("Alpha: %.2f  t_r: %.2f  angulo: %.2f", alpha, t_r, angulo)
 
+    #     if rho > 1:
+    #         pub.publish(vel_msg)
+    #         rate.sleep()
+    #     else:
+    #         vel_msg.angular.z = 0
+    #         vel_msg.linear.x = 0
+    #         pub.publish(vel_msg)
+    #         rate.sleep()
+    rospy.spin()
 
 if __name__ == '__main__':
     controle()
