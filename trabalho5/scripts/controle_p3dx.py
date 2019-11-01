@@ -29,10 +29,10 @@ def Laser(data):
     global x_r, y_r, t_r
 
     #Ganhos (campos potenciais)
-    Katt = 0.1 # cte de forca atrativa
-    Krep = 0.05 # cte de forca repulsiva
+    Katt = 0.4 # cte de forca atrativa
+    Krep = 0.6 # cte de forca repulsiva
     Eps = 0.0 # Distancia do robo ao objetivo
-    Ep0 = 2.0 # Cte do horizonte de eventos [m]
+    Ep0 = 4.0 # Cte do horizonte de eventos [m]
     deltaD = 0.01 # Distancia a ser caminhada na direcao
     #ksi = raio da bola de convergencia  
     ksi = 0.2 # Quanto menor ksi -> Mais preciso
@@ -41,7 +41,7 @@ def Laser(data):
     FrepY = 0
     vmax = 0.2 # Velocidade maxima do robo
     # Constante da velocidade angular
-    Kw = 0.5
+    Kw = 1
 
     pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
 
@@ -52,8 +52,6 @@ def Laser(data):
         if len(leituras) > 3:
             angulos  = np.where(leituras > data.range_max)
             angulos  = angulos - 180*np.ones(len(angulos[0]))
-            #print(len(angulos[0]))
-            #print(angulos)
             Indice_distancia_minima = int(angulos[0][ 0] - 1 + 180)
             if Indice_distancia_minima < 0:
                 Indice_distancia_minima = 0
@@ -70,13 +68,6 @@ def Laser(data):
                 distancia_maxima = leituras[Indice_distancia_maxima]
 	        #[-1] se refere ao indice final, equivalente ao end no matlab
             distancia        = (distancia_minima + distancia_maxima)/2
-	        #print(distancia_minima)
-	        #print(distancia_maxima)
- 	        #print(data.range_max)
-    	    #print(leituras)
-	        #print(angulos)
-	        #print(angulos[0][0]-1 + 180)
-	        #print(angulos[0][-1]+1+ 180) 
 
             angulo_minimo = np.min(angulos)
             angulo_maximo = np.max(angulos)
@@ -96,13 +87,6 @@ def Laser(data):
                 x_g =  np.cos( np.abs(angulo) )*distancia
                 y_g = -np.sin( np.abs(angulo) )*distancia
 
-	        #rospy.loginfo("Dist minimo: %.1f", distancia_minima)
-            #rospy.loginfo("Dist maximo: %.1f", distancia_maxima)
-
-            #rospy.loginfo("Angulo minimo: %.1f", angulo_minimo)
-            #rospy.loginfo("Angulo maximo: %.1f", angulo_maximo)
-            #rospy.loginfo("xg: %.2f   yg: %.2f", x_g, y_g)
-
             G = np.array([[x_g], [y_g]])
             ja_calc_objetivo = True
 
@@ -112,10 +96,6 @@ def Laser(data):
     #Distancia entre Pr e G
     DPG = Pr - G
     Dpg = np.linalg.norm(DPG)
-    # DPGt = DPG.transpose()
-    # Dpgg = DPGt[0][0]*DPG[0][0] + DPGt[0][1]*DPG[1][0] # Produto das matrizes (Transposta*normal)
-    # Dpg = np.sqrt(Dpgg)
-    #print(Dpg)
 
     if Dpg > ksi and ja_calc_objetivo == True:
         # Calcula a forca de atracao
@@ -125,9 +105,6 @@ def Laser(data):
         # Pontos do obstaculo dentro do horizonte de seguranca
         indices = np.where(Eps < Ep0)
         Indices = indices[0]
-        # print(Indices)
-        #print(len(Indices))
-        #print(Indices)
 
         # Verifica se nao ha obstaculos no horizonte de eventos
         if len(Indices) == 0:
@@ -137,17 +114,13 @@ def Laser(data):
             # Calculo da forca repulsiva
             for k in range(len(Indices)):
                 x_obstaculo, y_obstaculo = calcular_xy(leituras[Indices[k]], Indices[k])
-                #x_obstaculo = leituras[Indices[k]]
-                #y_obstaculo = leituras[Indices[k]]
-                #print(Indices[k])
-                #print(leituras[Indices[k]])
+
                 Termo1 = Krep*1/(Eps[Indices[k]]**3) # Adicionei sinal aqui negativo porque aparentemente esta contraria a forca
-                Termo2 = (1/Ep0) - (1/Eps[Indices[k]])
+                Termo2 = (1/Eps[Indices[k]]) - (1/Ep0) # Aqui estava ao contrario
                 Termo3X = Pr[0]-x_obstaculo
                 Termo3Y = Pr[1]-y_obstaculo
                 FrepX = FrepX + Termo1*Termo2*Termo3X
                 FrepY = FrepY + Termo1*Termo2*Termo3Y
-                print('FrepX: {}   FrepY: {}'.format(FrepX, FrepY))
 
         # Rotacionar forca para o frame do robo
         FrepX_fm = FrepX*np.cos(t_r) - FrepY*np.sin(t_r)
@@ -155,12 +128,15 @@ def Laser(data):
         # Forca total
         FtotX = Fatt[0] + FrepX_fm
         FtotY = Fatt[1] + FrepY_fm
-        print('FtotX: {}   FtotY: {}'.format(FtotX, FtotY))
+        #print('FrepX_fm: {}   FrepY_fm: {}'.format(FrepX_fm, FrepY_fm))
+        #print('FtotX: {}   FtotY: {}'.format(FtotX, FtotY))
         # Definicao do subobjetivo
         v = np.min(np.array( [np.linalg.norm( np.array([FtotX, FtotY]) ), vmax] ))
         #print(v)
-        ang = Kw*(np.arctan2(FtotY,FtotX) - t_r)
-        #print(ang)
+        # Angulo desejado pela forca atrativa
+        ang_obj = np.arctan2(Fatt[1], Fatt[0])
+        ang = Kw*(np.arctan2(FtotY, FtotX) - t_r)
+        print(ang)
         
         vel_msg.linear.x  = v
         vel_msg.linear.y  = 0
@@ -171,6 +147,8 @@ def Laser(data):
 
         pub.publish(vel_msg)
 
+        rate = rospy.Rate(10)
+        rate.sleep()
         #rospy.signal_shutdown('')
 
     else:
@@ -190,7 +168,6 @@ def Odometria(data):
     x_r = data.pose.pose.position.x
     y_r = data.pose.pose.position.y
     t_r = np.arctan2(2*data.pose.pose.orientation.w*data.pose.pose.orientation.z,1-2*data.pose.pose.orientation.z*data.pose.pose.orientation.z)
-#    rospy.loginfo("Xg: %.2f   Yg: %.2f  Xr: %.2f   Yr: %.2f   Tr:%.2f", x_g, y_g, x_r, y_r, t_r)
 
 # Controle de posicao para chegar onde a porta esta
 def controle():
