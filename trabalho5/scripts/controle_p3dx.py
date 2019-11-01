@@ -35,11 +35,11 @@ def Laser(data):
     Ep0 = 4.0 # Cte do horizonte de eventos [m]
     deltaD = 0.01 # Distancia a ser caminhada na direcao
     #ksi = raio da bola de convergencia  
-    ksi = 0.2 # Quanto menor ksi -> Mais preciso
+    ksi = 0.8 # Quanto menor ksi -> Mais preciso
 
     FrepX = 0 # Forca repulsiva inicial
     FrepY = 0
-    vmax = 0.2 # Velocidade maxima do robo
+    vmax = 0.3 # Velocidade maxima do robo
     # Constante da velocidade angular
     Kw = 1
 
@@ -122,7 +122,7 @@ def Laser(data):
                 FrepX = FrepX + Termo1*Termo2*Termo3X
                 FrepY = FrepY + Termo1*Termo2*Termo3Y
 
-        # Rotacionar forca para o frame do robo
+        # Rotacionar forca para o frame do mundo
         FrepX_fm = FrepX*np.cos(t_r) - FrepY*np.sin(t_r)
         FrepY_fm = FrepX*np.sin(t_r) + FrepY*np.cos(t_r)
         # Forca total
@@ -133,10 +133,8 @@ def Laser(data):
         # Definicao do subobjetivo
         v = np.min(np.array( [np.linalg.norm( np.array([FtotX, FtotY]) ), vmax] ))
         #print(v)
-        # Angulo desejado pela forca atrativa
-        ang_obj = np.arctan2(Fatt[1], Fatt[0])
         ang = Kw*(np.arctan2(FtotY, FtotX) - t_r)
-        print(ang)
+        #print(ang)
         
         vel_msg.linear.x  = v
         vel_msg.linear.y  = 0
@@ -148,7 +146,7 @@ def Laser(data):
         pub.publish(vel_msg)
 
         rate = rospy.Rate(10)
-        rate.sleep()
+        #rate.sleep()
         #rospy.signal_shutdown('')
 
     else:
