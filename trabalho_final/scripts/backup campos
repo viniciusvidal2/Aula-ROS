@@ -1,0 +1,33 @@
+while Dpg > ksi
+    # Cálcula a força de atração
+    Fatt = Katt*(G - Pr);
+    # Definição das distancias
+    sensor_laser = getLaserReadings(handler);
+    dist_obst = sensor_laser.Sensor.distance/1000; # Divide por 1000 para converter para metro
+    # Pontos do obstaculo dentro do horizonte de segurança
+    indices = find(dist_obst < Ep0);
+    
+    # Verifica se não há obstáculos no horizonte de eventos
+    if isempty(indices) == 1
+        Frep = [0;0];
+    else
+        # Cálculo da força repulsiva
+        for k = 1:length(indices)
+            x_obstaculo = sensor_laser.globalPosition.x(indices(k));
+            y_obstaculo = sensor_laser.globalPosition.y(indices(k));
+            Frep = Frep + Krep*(1/((dist_obst(indices(k)))^3))*...
+                ((1/Ep0)-(1/dist_obst(indices(k))))*...
+                [Obst.x(indices(k))-Pr(1);Obst.y(indices(k)) - Pr(2);...
+                Obst.z(indices(k)) - Pr(3)];
+        end 
+    end
+    # Força total
+    Ftot = Fatt + Frep;
+    # Definição do subobjetivo
+    v = min(sqrt(Ftot'*Ftot),vmax);
+    ang = Kw*(rad2deg(atan2(Ftot(2),Ftot(1)))-Pos.th);
+    setRotVel(handler, ang);
+    setVel(handler, v);
+end
+# Para o robô após chegar ao objetivo
+stop(handler);

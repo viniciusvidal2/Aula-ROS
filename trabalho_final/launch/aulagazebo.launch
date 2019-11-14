@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+<launch>
+<!--  world respawn-->
+    <include file="$(find trabalho_final)/launch/world.launch" >
+        <arg name="gui" value="true"/>
+        <arg name="headless" value="false"/>
+        <arg name="world_name" value="$(find trabalho_final)/worlds/trabalho_final2.world" />
+    </include>    
+
+<!-- models respawn-->
+   <node name="spawn_robot" pkg="gazebo_ros" type="spawn_model"
+          args="-file /$(find trabalho_final)/models/solo/solo.sdf
+                -sdf
+		-model solo
+ 	      -x 0 -y 0 -z 0
+              -R 0 -P 0 -Y 0"/>
+
+</launch>
