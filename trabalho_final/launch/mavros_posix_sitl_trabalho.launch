@@ -12,7 +12,7 @@
     <!-- vehicle model and world -->
     <arg name="est" default="ekf2"/>
     <arg name="vehicle" default="typhoon_h480"/>
-    <arg name="world" default="$(find trabalho_final)/worlds/trabalho_final2.world"/>
+    <arg name="world" default="$(find trabalho_final)/worlds/typhoon_h480.world"/>
     <arg name="sdf" default="$(find trabalho_final)/models/$(arg vehicle)/$(arg vehicle).sdf"/>
 
     <!-- gazebo configs -->
