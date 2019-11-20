@@ -136,16 +136,16 @@ int main(int argc, char **argv)
         r.sleep();
     }
 
-//    // Altera a taxa de comunicacao da placa pra ajudar a gente de alguma forma
-//    ros::ServiceClient srvRate = nh.serviceClient<mavros_msgs::StreamRate>("/mavros/set_stream_rate");
-//    mavros_msgs::StreamRate rate;
-//    rate.request.stream_id = 0;
-//    rate.request.message_rate = 30; // X Hz das mensagens que vem
-//    rate.request.on_off = 1; // Nao sei
-//    if(srvRate.call(rate))
-//        ROS_INFO("Taxa do Mavlink mudada para %d Hz", rate.request.message_rate);
-//    else
-//        ROS_INFO("Nao pode alterar a taxa Mavlink.");
+    // Altera a taxa de comunicacao da placa pra ajudar a gente de alguma forma
+    ros::ServiceClient srvRate = nh.serviceClient<mavros_msgs::StreamRate>("/mavros/set_stream_rate");
+    mavros_msgs::StreamRate rate;
+    rate.request.stream_id = 0;
+    rate.request.message_rate = 30; // X Hz das mensagens que vem
+    rate.request.on_off = 1; // Nao sei
+    if(srvRate.call(rate))
+        ROS_INFO("Taxa do Mavlink mudada para %d Hz", rate.request.message_rate);
+    else
+        ROS_INFO("Nao pode alterar a taxa Mavlink.");
 
     // Inicia enviando algumas posicoes para mudar bem de modo - exemplo online, nao faz tanta logica
     ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
