@@ -203,12 +203,12 @@ int main(int argc, char **argv)
             local_pos_pub.publish(pose);
             ROS_INFO("Corrigindo altitude. Alt atual: %.2f", current_alt_local);
         }
-        // Se chegamos na altitude, para de fazer isso e comecar a controlar
+        // Se chegamos na altitude, parar de fazer subir e comecar a controlar
         if(abs(current_alt_local - des_alt) < 0.2)
             alcancou_alt = true;
         if(alcancou_alt){
-            // Se o drone sair do range, corrigir
-            if(abs(current_alt_local - des_alt) > 10){
+            // Se o drone sair do range por X metros, corrigir
+            if(abs(current_alt_local - des_alt) > 5){
                 pose.pose.position.z = des_alt;
                 pose.pose.position.x = current_x;
                 pose.pose.position.y = current_y;
@@ -219,10 +219,10 @@ int main(int argc, char **argv)
 
 
                 // Ajusta com a metrica o quanto voar
-                pt.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED;
-                pt.type_mask = mavros_msgs::PositionTarget::IGNORE_PZ;
-                pt.velocity.y = 1;
-                pt.yaw_rate += 0.1;
+                pt.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED; // Enviamos aqui no frame do corpo do drone, Y a frente, X a esquerda, Z para cima
+                pt.type_mask = mavros_msgs::PositionTarget::IGNORE_PZ; // Assim tudo que e de posicao e ignorado, queremos mesmo e velocidade
+                pt.velocity.y = 1; // Avanco com X [m/s]
+                pt.yaw_rate += 0.1; // Aqui está o controle, ainda e misterio
                 // Envia para o drone
                 pub_setVel.publish(pt);
                 ROS_INFO("Enviando comando de CONTROLE.");
