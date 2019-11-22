@@ -36,7 +36,7 @@ double current_lat, current_lon, current_alt_global;
 double current_x = 0, current_y = 0, current_alt_local = 0;
 double current_yaw = 0, des_alt = 18;
 
-bool inicio = true, alcancou_inicio = false;
+bool inicio = true, alcancou_altitude = false, alcancou_inicio = false;
 
 ros::Publisher pub_setVel;
 ros::Publisher local_pos_pub;
@@ -46,11 +46,8 @@ mavros_msgs::State current_state;
 cv_bridge::CvImagePtr image_ptr;
 
 float controle_yaw, controle_alt;
-float Kp_y = 2, Ki_y = 0, Kd_y = 0;
+float Kp_y = 0.2, Ki_y = 0, Kd_y = 0;
 float erro_acc = 0, erro_anterior = 0;
-
-
-int contador = 0;
 
 
 /// Callback imagem da camera
@@ -92,10 +89,32 @@ void escutaPosicaoLocal(const geometry_msgs::PoseStampedConstPtr& msg)
     current_x = msg->pose.position.x; current_y = msg->pose.position.y; current_alt_local = msg->pose.position.z;
 }
 
+/// Verifica se chegou na altitude desejada antes de mover ao inicio do poste
+///
+bool chegouNaAltitude(float g){
+    // Enquando nao estamos na altitude, publicar e retornar false
+    if(abs(current_alt_local - g) > 0.1){
+        // Enviar comando
+        geometry_msgs::PoseStamped pose;
+        pose.pose.position.z = g;
+        pose.pose.position.x = current_x;
+        pose.pose.position.y = current_y;
+        local_pos_pub.publish(pose);
+        ROS_INFO("Subindo o drone ate %.2f metros antes de ir para o inicio....", g);
+
+        // Retornar false - nao chegamos ainda
+        return false;
+    } else { // Se chegamos, mandar logo true e seguir em frente
+
+        return true;
+
+    }
+}
+
 /// Verifica se chegou no inicio do poste
 ///
 bool chegouNoInicio(){
-    float inix = 5.5, iniy = 5, iniz = 14; // Inicio do poste [m]
+    float inix = 6, iniy = 5, iniz = 14; // Inicio do poste [m]
     // Enquanto nao estamos proximos do ponto de inicio, enviar comando para la
     // Uma vez que chegar, nao entrar mais
     if(sqrt( pow(inix - current_x        , 2) +
@@ -142,9 +161,12 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
 
 
     // Calculo do controlador de YAW - atualiza variavel de controle
-    controle_yaw  = Kp_y*erro;
+    controle_yaw  = -Kp_y*erro;
     erro_acc     += erro;
     erro_anterior = erro;
+
+    // Calculo do controlador de altitude - atualiza variavel de controle
+    controle_alt = 0;
 }
 
 /// Main
@@ -231,8 +253,10 @@ int main(int argc, char **argv)
 
     // Cria a mensagem que vai para o controle
     mavros_msgs::PositionTarget pt;
-    pt.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_OFFSET_NED; // Enviamos aqui no frame do corpo do drone, Y a frente, X a esquerda, Z para cima
-    pt.type_mask = mavros_msgs::PositionTarget::IGNORE_PZ; // Assim tudo que e de posicao e ignorado, queremos mesmo e velocidade
+    pt.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED; // Enviamos aqui no frame do corpo do drone, Y a frente, X a esquerda, Z para cima
+    pt.type_mask = mavros_msgs::PositionTarget::IGNORE_PX  | mavros_msgs::PositionTarget::IGNORE_PY  | mavros_msgs::PositionTarget::IGNORE_PZ  | // Ignora posicao
+                   mavros_msgs::PositionTarget::IGNORE_AFX | mavros_msgs::PositionTarget::IGNORE_AFY | mavros_msgs::PositionTarget::IGNORE_AFZ | // Ignora aceleracao
+                   mavros_msgs::PositionTarget::IGNORE_YAW;                                                                                      // Ignora YAW
 
     ////////////////////////
     /// LOOP DE CONTROLE ///
@@ -265,39 +289,26 @@ int main(int argc, char **argv)
             ROS_INFO("Subindo !!");
             inicio = false; // So uma vez e necessario
         }
+        // Enquanto nao alcancamos altitude, nem ao ponto vamos
+        if(!alcancou_altitude)
+            alcancou_altitude = chegouNaAltitude(des_alt);
         // Enquanto nao estamos no inicio desejado, continuar enviando essa posicao para o drone
-        if(!alcancou_inicio)
+        if(!alcancou_inicio && alcancou_altitude)
             alcancou_inicio = chegouNoInicio();
 
         // Se chegamos no inicio do poste, parar de fazer subir e comecar a controlar
-        if(alcancou_inicio){
+        if(alcancou_inicio && alcancou_altitude){
 
 
-//            if(contador == 0){
                 ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
                 // Ajusta com a metrica o quanto voar
-                pt.velocity.y = 1;            // Avanco com Y [m/s] (positivo para frente)
-//                pt.velocity.x = -2;
-                pt.velocity.z = 0;   // No eixo de altitude [m/s] (positivo para cima)
-                pt.yaw_rate   = 0.2; // Taxa de correcao do controle de YAW
-                pt.yaw        = 2; // Aqui está o controle, ainda e misterio
+                pt.velocity.y = 0.8;            // Avanco com Y [m/s] (positivo para frente)
+                pt.velocity.z = controle_alt; // No eixo de altitude [m/s] (positivo para cima)
+                pt.yaw_rate   = controle_yaw; // Taxa de correcao do controle de YAW
                 // Envia para o drone
                 pub_setVel.publish(pt);
                 ROS_INFO("Enviando comando de CONTROLE.");
                 ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
-//            contador ++;
-//            } else {
-//                ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
-//                // Ajusta com a metrica o quanto voar
-//                pt.velocity.y = 0;            // Avanco com Y [m/s] (positivo para frente)
-//                pt.velocity.z = 0;   // No eixo de altitude [m/s] (positivo para cima)
-//                pt.yaw_rate   = 0; // Taxa de correcao do controle de YAW
-//                pt.yaw        = 0; // Aqui está o controle, ainda e misterio
-//                // Envia para o drone
-//                pub_setVel.publish(pt);
-//                ROS_INFO("Enviando comando de CONTROLE.");
-//                ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
-//            }
 
 
         }
