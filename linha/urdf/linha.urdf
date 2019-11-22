@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="linha">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="706.02" />
+      <inertia
+        ixx="5881.5"
+        ixy="1.1397E-17"
+        ixz="0.41678"
+        iyy="5881.5"
+        iyz="-3.3767E-15"
+        izz="7.9369" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linha/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.91765 0.78824 0.57647 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linha/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="barralink">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="89.397" />
+      <inertia
+        ixx="67.371"
+        ixy="4.234E-16"
+        ixz="1.4328E-14"
+        iyy="67.244"
+        iyz="1.2058E-15"
+        izz="0.46408" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linha/meshes/barralink.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linha/meshes/barralink.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="barrajunta"
+    type="fixed">
+    <origin
+      xyz="-0.835842041956596 -23.925 -0.035122804521445"
+      rpy="3.14159265358979 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="barralink" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="suplink">
+    <inertial>
+      <origin
+        xyz="-3.4493E-07 0.024783 5.35E-08"
+        rpy="0 0 0" />
+      <mass
+        value="1.4025" />
+      <inertia
+        ixx="0.0048578"
+        ixy="-2.4354E-08"
+        ixz="-1.1709E-08"
+        iyy="0.0031424"
+        iyz="3.5219E-09"
+        izz="0.006599" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linha/meshes/suplink.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.77647 0.75686 0.73725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linha/meshes/suplink.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="supjunta"
+    type="fixed">
+    <origin
+      xyz="0.0749999999999995 0.150000000000002 1.125"
+      rpy="0 1.5707963267949 0" />
+    <parent
+      link="barralink" />
+    <child
+      link="suplink" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="cabolink">
+    <inertial>
+      <origin
+        xyz="-0.00078291 -0.71638 -10.183"
+        rpy="0 0 0" />
+      <mass
+        value="100.98" />
+      <inertia
+        ixx="3524.2"
+        ixy="0.056191"
+        ixz="-0.79816"
+        iyy="3512.5"
+        iyz="13.879"
+        izz="11.729" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linha/meshes/cabolink.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89804 0.92157 0.92941 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linha/meshes/cabolink.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="cabojunta"
+    type="fixed">
+    <origin
+      xyz="0 0.0399999999999814 0.0199999999999609"
+      rpy="3.14159265358979 0 3.14159265358979" />
+    <parent
+      link="suplink" />
+    <child
+      link="cabolink" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+</robot>

@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="linhafinal">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="-0.63204 -2.4201 14.693"
+        rpy="0 0 0" />
+      <mass
+        value="706.02" />
+      <inertia
+        ixx="5881.5"
+        ixy="-8.0195E-17"
+        ixz="0.41678"
+        iyy="5881.5"
+        iyz="-1.9787E-15"
+        izz="7.9369" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.91765 0.78824 0.57647 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="barra1link">
+    <inertial>
+      <origin
+        xyz="-16.703 10.322 8.9288"
+        rpy="0 0 0" />
+      <mass
+        value="89.397" />
+      <inertia
+        ixx="49.312"
+        ixy="-29.701"
+        ixz="-3.8385E-13"
+        iyy="18.523"
+        iyz="-6.2951E-13"
+        izz="67.244" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/barra1link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/barra1link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="barra1junta"
+    type="fixed">
+    <origin
+      xyz="19.1872975653273 -9.69282277451948 -2.56211696932977"
+      rpy="1.57079632679488 -0.546301181003477 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="barra1link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="sup1link">
+    <inertial>
+      <origin
+        xyz="0.075 -1.125 0.17478"
+        rpy="0 0 0" />
+      <mass
+        value="1.4025" />
+      <inertia
+        ixx="0.006599"
+        ixy="-1.1709E-08"
+        ixz="3.5923E-09"
+        iyy="0.0048578"
+        iyz="-2.4354E-08"
+        izz="0.0031424" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/sup1link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.77647 0.75686 0.73725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/sup1link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="sup1junta"
+    type="fixed">
+    <origin
+      xyz="-16.7667876008367 10.3608486378965 8.92939479201522"
+      rpy="0 0 -0.546301181003477" />
+    <parent
+      link="barra1link" />
+    <child
+      link="sup1link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="cabo1link">
+    <inertial>
+      <origin
+        xyz="10.203 0.00078291 -0.59638"
+        rpy="0 0 0" />
+      <mass
+        value="100.98" />
+      <inertia
+        ixx="11.729"
+        ixy="-0.79816"
+        ixz="-13.879"
+        iyy="3524.2"
+        iyz="-0.056191"
+        izz="3512.5" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/cabo1link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89804 0.92157 0.92941 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/cabo1link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="cabo1junta"
+    type="fixed">
+    <origin
+      xyz="0.0749999999999999 -1.125 0.0700000000000003"
+      rpy="0 0 0" />
+    <parent
+      link="sup1link" />
+    <child
+      link="cabo1link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="sup2link">
+    <inertial>
+      <origin
+        xyz="-5.3988E-08 3.459E-07 -0.015217"
+        rpy="0 0 0" />
+      <mass
+        value="1.4025" />
+      <inertia
+        ixx="0.006599"
+        ixy="-1.1558E-08"
+        ixz="-3.561E-09"
+        iyy="0.0048578"
+        iyz="2.4428E-08"
+        izz="0.0031424" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/sup2link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.77647 0.75686 0.73725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/sup2link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="sup2junta"
+    type="fixed">
+    <origin
+      xyz="20.3767357062008 0.117861280524884 0.11560520798476"
+      rpy="0 0 -2.59529147258632" />
+    <parent
+      link="cabo1link" />
+    <child
+      link="sup2link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="barra2link">
+    <inertial>
+      <origin
+        xyz="0 1.125 -0.070574"
+        rpy="0 0 0" />
+      <mass
+        value="89.397" />
+      <inertia
+        ixx="67.371"
+        ixy="8.2157E-15"
+        ixz="-1.4547E-15"
+        iyy="0.46408"
+        iyz="1.6262E-15"
+        izz="67.244" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/barra2link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/barra2link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="barra2junta"
+    type="fixed">
+    <origin
+      xyz="0 0 -0.11999999999982"
+      rpy="0 0 -3.14159265358979" />
+    <parent
+      link="sup2link" />
+    <child
+      link="barra2link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="poste1link">
+    <inertial>
+      <origin
+        xyz="-0.11015 -1.7764E-15 -3.9297"
+        rpy="0 0 0" />
+      <mass
+        value="706.02" />
+      <inertia
+        ixx="5881.5"
+        ixy="4.5204E-13"
+        ixz="0.41678"
+        iyy="5881.5"
+        iyz="3.3064E-13"
+        izz="7.9369" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/poste1link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.91765 0.78824 0.57647 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhafinal/meshes/poste1link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="poste2junta"
+    type="fixed">
+    <origin
+      xyz="-0.0750000000000028 1.125 -0.0700000000000003"
+      rpy="0 0 0" />
+    <parent
+      link="barra2link" />
+    <child
+      link="poste1link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+</robot>
