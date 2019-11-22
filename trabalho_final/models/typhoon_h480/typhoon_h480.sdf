@@ -1641,10 +1641,10 @@
 	    <ray>
 		<scan>
 		   <horizontal>
-		   <samples>180</samples>
+		   <samples>120</samples>
 		   <resolution>1</resolution>
-		   <min_angle>-1.05</min_angle>
-		   <max_angle>1.05</max_angle>
+		   <min_angle>-0.52359</min_angle>
+		   <max_angle>0.52359</max_angle>
 		   </horizontal>
 		</scan>
 		<range>
@@ -1666,7 +1666,7 @@
     </link>
   
     <joint type="fixed" name="hokuyo1_joint">
-       <pose>-0.107 0 -0.17 0 1.610795 3.14159</pose>
+       <pose>-0.11 0 -0.17 0 1.600795 3.14159</pose>
        <child>hokuyo1_link</child>
          <parent>cgo3_camera_link</parent>
         <axis>

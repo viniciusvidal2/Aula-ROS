@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="montagemtorre">
+  <!-- Used for fixing robot to Gazebo 'base_link' -->  
+  <link name="world"/>
+  <joint name="fixed" type="fixed">
+      <parent link="world"/>
+      <child link="base_link"/>
+  </joint>
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="705.7" />
+      <inertia
+        ixx="5876.5"
+        ixy="-3.1532E-15"
+        ixz="0.54944"
+        iyy="5876.5"
+        iyz="2.067E-11"
+        izz="7.9321" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 9"
+        rpy="1.57 0 0" />
+      <geometry>
+        <mesh
+          filename="package://montagemtorre/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 9"
+        rpy="1.57 0 0" />
+      <geometry>
+        <mesh
+          filename="package://montagemtorre/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="torre_barra_link">
+    <inertial>
+      <origin
+        xyz="0.1 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="89.397" />
+      <inertia
+        ixx="67.371"
+        ixy="-2.3455E-17"
+        ixz="-3.1682E-16"
+        iyy="67.244"
+        iyz="2.5763E-13"
+        izz="0.46408" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://montagemtorre/meshes/torre_barra_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://montagemtorre/meshes/torre_barra_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="torre_barra_junta"
+    type="fixed">
+    <origin
+      xyz="0.0999999999999979 0 8.925"
+      rpy="1.5707963267949 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="torre_barra_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="suporte_barra_link">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="1.4025" />
+      <inertia
+        ixx="0.0048578"
+        ixy="-2.4478E-08"
+        ixz="-1.1761E-08"
+        iyy="0.0031424"
+        iyz="3.566E-09"
+        izz="0.006599" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://montagemtorre/meshes/suporte_barra_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://montagemtorre/meshes/suporte_barra_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="suporte_barra_junta"
+    type="fixed">
+    <origin
+      xyz="0.0750000000000011 0.149999999999996 1.12499999999999"
+      rpy="0 1.5707963267949 0" />
+    <parent
+      link="torre_barra_link" />
+    <child
+      link="suporte_barra_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="cabo_suporte_link">
+    <inertial>
+      <origin
+        xyz="-1.7764E-15 0 9.96"
+        rpy="0 0 0" />
+      <mass
+        value="100.53" />
+      <inertia
+        ixx="3351.1"
+        ixy="0"
+        ixz="3.5091E-13"
+        iyy="3351.1"
+        iyz="4.1167E-13"
+        izz="0.080425" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://montagemtorre/meshes/cabo_suporte_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://montagemtorre/meshes/cabo_suporte_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="cabo_suporte_junta"
+    type="fixed">
+    <origin
+      xyz="0 0.0400000000000009 0"
+      rpy="0 0 1.90044401367296" />
+    <parent
+      link="suporte_barra_link" />
+    <child
+      link="cabo_suporte_link" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+</robot>

@@ -34,7 +34,7 @@ using namespace std;
 ///
 double current_lat, current_lon, current_alt_global;
 double current_x = 0, current_y = 0, current_alt_local = 0;
-double current_yaw = 0, des_alt = 14;
+double current_yaw = 0, des_alt = 18;
 
 bool inicio = true, alcancou_inicio = false;
 
@@ -44,6 +44,14 @@ ros::Publisher local_pos_pub;
 mavros_msgs::State current_state;
 
 cv_bridge::CvImagePtr image_ptr;
+
+float controle_yaw, controle_alt;
+float Kp_y = 2, Ki_y = 0, Kd_y = 0;
+float erro_acc = 0, erro_anterior = 0;
+
+
+int contador = 0;
+
 
 /// Callback imagem da camera
 ///
@@ -87,7 +95,7 @@ void escutaPosicaoLocal(const geometry_msgs::PoseStampedConstPtr& msg)
 /// Verifica se chegou no inicio do poste
 ///
 bool chegouNoInicio(){
-    float inix = 5.4, iniy = 5, iniz = 14; // Inicio do poste [m]
+    float inix = 5.5, iniy = 5, iniz = 14; // Inicio do poste [m]
     // Enquanto nao estamos proximos do ponto de inicio, enviar comando para la
     // Uma vez que chegar, nao entrar mais
     if(sqrt( pow(inix - current_x        , 2) +
@@ -112,10 +120,31 @@ bool chegouNoInicio(){
 /// Callback medicao do laser
 ///
 void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
-    std::vector<float> leituras = msg_laser->ranges;
-    // Aplica tecnica de controle
+    // Variaveis
+    std::vector<int> indices_validos;
+    std::vector<float> dist_validas;
+    float erro = 0, centro = float(msg_laser->ranges.size()/2);
+    /// Aplica tecnica de controle ///
+    // Varre vetor de leituras atras dos indices com leituras validas e suas medidas
+    for(size_t i = 0; i < msg_laser->ranges.size(); i++){
+        if(msg_laser->ranges[i] < msg_laser->range_max){
+            indices_validos.push_back(i);
+            dist_validas.push_back(msg_laser->ranges[i]);
+            // Atualiza o erro de YAW
+            erro += (centro - i)/msg_laser->ranges.size();
+        }
+    }
+//    ROS_WARN("LEITURAS NOVAS:");
+//    for(size_t i = 0; i < dist_validas.size(); i++){
+//        ROS_INFO("Indice: %d   Leitura: %.2f", indices_validos[i], dist_validas[i]);
+//    }
+    // Calcula erro de altitude - variam pouco, usando primeira leitura sempre por padrao
 
-    // Atualiza variavel de controle
+
+    // Calculo do controlador de YAW - atualiza variavel de controle
+    controle_yaw  = Kp_y*erro;
+    erro_acc     += erro;
+    erro_anterior = erro;
 }
 
 /// Main
@@ -202,7 +231,7 @@ int main(int argc, char **argv)
 
     // Cria a mensagem que vai para o controle
     mavros_msgs::PositionTarget pt;
-    pt.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED; // Enviamos aqui no frame do corpo do drone, Y a frente, X a esquerda, Z para cima
+    pt.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_OFFSET_NED; // Enviamos aqui no frame do corpo do drone, Y a frente, X a esquerda, Z para cima
     pt.type_mask = mavros_msgs::PositionTarget::IGNORE_PZ; // Assim tudo que e de posicao e ignorado, queremos mesmo e velocidade
 
     ////////////////////////
@@ -244,14 +273,31 @@ int main(int argc, char **argv)
         if(alcancou_inicio){
 
 
-            ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
-            // Ajusta com a metrica o quanto voar
-            pt.velocity.y = 1; // Avanco com Y [m/s] (positivo para frente)
-            pt.velocity.z = 0; // No eixo de altitude [m/s] (positivo para cima)
-            pt.yaw_rate   = 0; // Aqui está o controle, ainda e misterio
-            // Envia para o drone
-            pub_setVel.publish(pt);
-            ROS_INFO("Enviando comando de CONTROLE.");
+//            if(contador == 0){
+                ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
+                // Ajusta com a metrica o quanto voar
+                pt.velocity.y = 1;            // Avanco com Y [m/s] (positivo para frente)
+//                pt.velocity.x = -2;
+                pt.velocity.z = 0;   // No eixo de altitude [m/s] (positivo para cima)
+                pt.yaw_rate   = 0.2; // Taxa de correcao do controle de YAW
+                pt.yaw        = 2; // Aqui está o controle, ainda e misterio
+                // Envia para o drone
+                pub_setVel.publish(pt);
+                ROS_INFO("Enviando comando de CONTROLE.");
+                ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
+//            contador ++;
+//            } else {
+//                ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
+//                // Ajusta com a metrica o quanto voar
+//                pt.velocity.y = 0;            // Avanco com Y [m/s] (positivo para frente)
+//                pt.velocity.z = 0;   // No eixo de altitude [m/s] (positivo para cima)
+//                pt.yaw_rate   = 0; // Taxa de correcao do controle de YAW
+//                pt.yaw        = 0; // Aqui está o controle, ainda e misterio
+//                // Envia para o drone
+//                pub_setVel.publish(pt);
+//                ROS_INFO("Enviando comando de CONTROLE.");
+//                ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
+//            }
 
 
         }
