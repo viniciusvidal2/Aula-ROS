@@ -49,9 +49,9 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roscpp std_msgs rospy mavros sensor_msgs geometry_msgs</build_depend>
-  <build_export_depend>roscpp std_msgs rospy mavros sensor_msgs geometry_msgs</build_export_depend>
-  <exec_depend>roscpp std_msgs rospy mavros sensor_msgs geometry_msgs</exec_depend>
+  <build_depend>roscpp std_msgs rospy mavros sensor_msgs geometry_msgs cv_bridge laser_geometry</build_depend>
+  <build_export_depend>roscpp std_msgs rospy mavros sensor_msgs geometry_msgs cv_bridge laser_geometry</build_export_depend>
+  <exec_depend>roscpp std_msgs rospy mavros sensor_msgs geometry_msgs cv_bridge laser_geometry</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

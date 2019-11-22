@@ -21,6 +21,12 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <std_msgs/Float64.h>
+#include <sensor_msgs/LaserScan.h>
+#include <sensor_msgs/Image.h>
+
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 using namespace std;
 
@@ -28,13 +34,23 @@ using namespace std;
 ///
 double current_lat, current_lon, current_alt_global;
 double current_x = 0, current_y = 0, current_alt_local = 0;
-double current_yaw = 0, des_alt = 20;
+double current_yaw = 0, des_alt = 14;
 
-bool inicio = true, alcancou_alt = false;
+bool inicio = true, alcancou_inicio = false;
 
 ros::Publisher pub_setVel;
+ros::Publisher local_pos_pub;
 
 mavros_msgs::State current_state;
+
+cv_bridge::CvImagePtr image_ptr;
+
+/// Callback imagem da camera
+///
+void escutaCamera(const sensor_msgs::ImageConstPtr& msg){
+    // Aqui ja temos a imagem em ponteiro de opencv
+    image_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+}
 
 /// Callback estado de voo
 ///
@@ -66,19 +82,40 @@ void escutaPosicaoLocal(const geometry_msgs::PoseStampedConstPtr& msg)
 {
     // Le posicao atual a partir da mensagem
     current_x = msg->pose.position.x; current_y = msg->pose.position.y; current_alt_local = msg->pose.position.z;
-//    // Checa altura se ja chegou, enquanto nao chegar nao tem conversa
-//    if(abs(current_alt_local - des_alt) < 0.2){
+}
 
-////        // Cria a mensagem que vai para o controle
-////        geometry_msgs::Twist vel_msg;
-////        // Ajusta com a metrica o quanto voar
-////        vel_msg.linear.z = 0.1;
-////        // Envia para o drone
-////        pub_setVel.publish(vel_msg);
+/// Verifica se chegou no inicio do poste
+///
+bool chegouNoInicio(){
+    float inix = 5.4, iniy = 5, iniz = 14; // Inicio do poste [m]
+    // Enquanto nao estamos proximos do ponto de inicio, enviar comando para la
+    // Uma vez que chegar, nao entrar mais
+    if(sqrt( pow(inix - current_x        , 2) +
+             pow(iniy - current_y        , 2) +
+             pow(iniz - current_alt_local, 2) ) >= 0.1){
+        // Enviar comando
+        geometry_msgs::PoseStamped pose;
+        pose.pose.position.z = iniz;
+        pose.pose.position.x = inix;
+        pose.pose.position.y = iniy;
+        local_pos_pub.publish(pose);
+        ROS_INFO("Caminhando para o inicio....");
 
-//    } else {
-//        ROS_INFO("Altitude atual: %.2f", msg->pose.position.z);
-//    }
+        return false;
+    } else {
+
+        return true;
+
+    }
+}
+
+/// Callback medicao do laser
+///
+void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
+    std::vector<float> leituras = msg_laser->ranges;
+    // Aplica tecnica de controle
+
+    // Atualiza variavel de controle
 }
 
 /// Main
@@ -88,19 +125,20 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "controle");
     ros::NodeHandle nh;
 
-    // Declara subscriber posicao local
+    // Subscriber posicao local
     ros::Subscriber subloc = nh.subscribe("/mavros/local_position/pose", 100, escutaPosicaoLocal);
-
-    // Declara subscriber posicao global
+    // Subscriber posicao global
     ros::Subscriber subglo = nh.subscribe("/mavros/global_position/global", 100, escutaPosicaoGlobal);
-
-    // Declara subscriber orientacao
+    // Subscriber orientacao
     ros::Subscriber subcom = nh.subscribe("/mavros/global_position/compass_hdg", 100, escutaBussola);
-
-    // Declara subscriber de estado de voo da aeronave
+    // Subscriber de estado de voo da aeronave
     ros::Subscriber substt = nh.subscribe("mavros/state", 10, escutaEstado);
+    // Subscriber do laser
+    ros::Subscriber sublsr = nh.subscribe("/scan1", 100, escutaLaser);
+    // Subscriber da imagem
+    ros::Subscriber subima = nh.subscribe("/cgo3_camera/image_raw", 10, escutaCamera);
 
-    // Declara o Publisher de controle
+    // Publisher de controle
     pub_setVel = nh.advertise<mavros_msgs::PositionTarget>("/mavros/setpoint_raw/local", 100);
 
     // Inicia o servico de takeoff sobre o drone
@@ -131,7 +169,7 @@ int main(int argc, char **argv)
         ROS_INFO("Nao pode alterar a taxa Mavlink.");
 
     // Inicia enviando algumas posicoes para mudar bem de modo - exemplo online, nao faz tanta logica
-    ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
+    local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
     geometry_msgs::PoseStamped pose;
     pose.pose.position.x = 0;
     pose.pose.position.y = 0;
@@ -164,13 +202,15 @@ int main(int argc, char **argv)
 
     // Cria a mensagem que vai para o controle
     mavros_msgs::PositionTarget pt;
+    pt.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED; // Enviamos aqui no frame do corpo do drone, Y a frente, X a esquerda, Z para cima
+    pt.type_mask = mavros_msgs::PositionTarget::IGNORE_PZ; // Assim tudo que e de posicao e ignorado, queremos mesmo e velocidade
 
     ////////////////////////
     /// LOOP DE CONTROLE ///
     ////////////////////////
     ros::Time last_request = ros::Time::now();
     while(ros::ok()){
-        // Checa e envia o novo modo a cada tempo
+        // Checa e envia o modo de VOO OFFBOARD a cada tempo
         if( current_state.mode != "OFFBOARD" && (ros::Time::now() - last_request > ros::Duration(0.5))){
             if(srvMode.call(offb_set_mode))
                 ROS_INFO("Modo OFFBOARD.");
@@ -188,47 +228,32 @@ int main(int argc, char **argv)
                 ROS_INFO("Drone subindo para altitude de %.2f metros, LAT: %f  LON %f ...", des_alt, current_lat, current_lon);
             else
                 ROS_INFO("Nao foi possivel subir o drone.");
+            // Inicio nao existira mais, e manda subir aqui so por desencargo
             pose.pose.position.z = des_alt;
             pose.pose.position.x = current_x;
             pose.pose.position.y = current_y;
             local_pos_pub.publish(pose);
-            ROS_INFO("Corrigindo altitude. Alt atual: %.2f", current_alt_local);
+            ROS_INFO("Subindo !!");
             inicio = false; // So uma vez e necessario
         }
-        // Enquanto nao estamos na altitude desejada, continuar enviando essa posicao para o drone
-        if(!alcancou_alt){
-            pose.pose.position.z = des_alt;
-            pose.pose.position.x = current_x;
-            pose.pose.position.y = current_y;
-            local_pos_pub.publish(pose);
-            ROS_INFO("Corrigindo altitude. Alt atual: %.2f", current_alt_local);
-        }
-        // Se chegamos na altitude, parar de fazer subir e comecar a controlar
-        if(abs(current_alt_local - des_alt) < 0.2)
-            alcancou_alt = true;
-        if(alcancou_alt){
-            // Se o drone sair do range por X metros, corrigir
-            if(abs(current_alt_local - des_alt) > 5){
-                pose.pose.position.z = des_alt;
-                pose.pose.position.x = current_x;
-                pose.pose.position.y = current_y;
-                local_pos_pub.publish(pose);
-                ROS_INFO("Corrigindo altitude. Alt atual: %.2f", current_alt_local);
+        // Enquanto nao estamos no inicio desejado, continuar enviando essa posicao para o drone
+        if(!alcancou_inicio)
+            alcancou_inicio = chegouNoInicio();
 
-            } else { /// Aqui sim enviamos comando para controlar por velocidade e yaw ///
+        // Se chegamos no inicio do poste, parar de fazer subir e comecar a controlar
+        if(alcancou_inicio){
 
 
-                // Ajusta com a metrica o quanto voar
-                pt.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED; // Enviamos aqui no frame do corpo do drone, Y a frente, X a esquerda, Z para cima
-                pt.type_mask = mavros_msgs::PositionTarget::IGNORE_PZ; // Assim tudo que e de posicao e ignorado, queremos mesmo e velocidade
-                pt.velocity.y = 1; // Avanco com X [m/s]
-                pt.yaw_rate += 0.1; // Aqui está o controle, ainda e misterio
-                // Envia para o drone
-                pub_setVel.publish(pt);
-                ROS_INFO("Enviando comando de CONTROLE.");
+            ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
+            // Ajusta com a metrica o quanto voar
+            pt.velocity.y = 1; // Avanco com Y [m/s] (positivo para frente)
+            pt.velocity.z = 0; // No eixo de altitude [m/s] (positivo para cima)
+            pt.yaw_rate   = 0; // Aqui está o controle, ainda e misterio
+            // Envia para o drone
+            pub_setVel.publish(pt);
+            ROS_INFO("Enviando comando de CONTROLE.");
 
 
-            }
         }
 
         // Spin

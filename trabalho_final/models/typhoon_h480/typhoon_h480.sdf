@@ -366,7 +366,7 @@
         </surface>
       </collision>
       <visual name='cgo3_camera_visual'>
-        <pose>0 0 0 0 0 0</pose>
+        <pose>-0.202 0 -0.118 0 -1.570795 0</pose>
         <geometry>
           <mesh>
             <scale>0.001 0.001 0.001</scale>
@@ -432,7 +432,7 @@
     </link>
     <joint name='cgo3_camera_joint' type='revolute'>
       <child>cgo3_camera_link</child>
-      <parent>cgo3_horizontal_arm_link</parent>
+      <parent>cgo3_horizontal_arm_link</parent> 
       <pose>-0.041 0.03 -0.162 0 0 0</pose>
       <axis>
         <xyz>0 -1 0</xyz>
@@ -1599,9 +1599,9 @@
         </channel>
         <channel>
           <joint_control_pid>
-            <p>2.068</p>
-            <i>0.01245</i>
-            <d>0.01</d>
+            <p>2.098</p>
+            <i>0.01745</i>
+            <d>0.02</d>
             <iMax>0</iMax>
             <iMin>0</iMin>
             <cmdMax>0.3</cmdMax>
@@ -1616,14 +1616,14 @@
 
     <!-- Vinicius na area --->
     <link name='hokuyo1_link'>
-      <pose frame='hokuyo1'>-0.11 0 -0.17 0 1.570795 3.14159</pose>
+      <pose frame='hokuyo1'>-0.11 0 -0.17 0 1.600795 3.14159</pose>
       <inertial>
         <mass>0.1</mass>
       </inertial>
       <collision name='collision'>
         <geometry>
           <box>
-            <size>0.1 0.1 0.1</size>
+            <size>0.02 0.02 0.02</size>
           </box>
         </geometry>
       </collision>
@@ -1659,14 +1659,14 @@
 		</noise>
 	    </ray>
             <plugin name="gazebo_ros_head_hokuyo1_controller" filename="libgazebo_ros_laser.so">
-		<topicName>/scan</topicName>
+		<topicName>/scan1</topicName>
 		<frameName>hokuyo1_link</frameName>
 	    </plugin>
        </sensor>
     </link>
   
     <joint type="fixed" name="hokuyo1_joint">
-       <pose>0 0.1 0 0 1.570795 3.14159</pose>
+       <pose>-0.107 0 -0.17 0 1.610795 3.14159</pose>
        <child>hokuyo1_link</child>
          <parent>cgo3_camera_link</parent>
         <axis>
