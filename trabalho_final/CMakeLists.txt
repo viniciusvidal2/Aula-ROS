@@ -8,8 +8,10 @@ add_compile_options(-std=c++11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp std_msgs rospy mavros sensor_msgs geometry_msgs
+  roscpp std_msgs rospy mavros sensor_msgs geometry_msgs cv_bridge laser_geometry
 )
+include_directories(${catkin_INCLUDE_DIRS})
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -113,10 +115,6 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
-)
 
 add_executable(controle_node src/controle.cpp)
-target_link_libraries(controle_node ${catkin_LIBRARIES})
+target_link_libraries(controle_node ${catkin_LIBRARIES} ${OpenCV_LIBS})
