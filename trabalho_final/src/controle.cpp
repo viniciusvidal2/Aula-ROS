@@ -5,6 +5,8 @@
 #include <Eigen/Dense>
 #include <Eigen/Core>
 
+#include <math.h>
+
 #include <mavros/mavros.h>
 #include <mavros/utils.h>
 #include <mavlink/config.h>
@@ -34,7 +36,7 @@ using namespace std;
 ///
 double current_lat, current_lon, current_alt_global;
 double current_x = 0, current_y = 0, current_alt_local = 0;
-double current_yaw = 0, des_alt = 18;
+double current_yaw = 0, des_alt = 15;
 
 bool inicio = true, alcancou_altitude = false, alcancou_inicio = false;
 
@@ -46,9 +48,17 @@ mavros_msgs::State current_state;
 cv_bridge::CvImagePtr image_ptr;
 
 float controle_yaw, controle_alt;
-float Kp_y = 0.2, Ki_y = 0, Kd_y = 0;
-float erro_acc = 0, erro_anterior = 0;
+float Kp_y = 0.8, Ki_y = 0, Kd_y = 0;
+float Kp_h = 2, Ki_h = 0, Kd_h = 0;
+float erro_acc_yaw = 0, erro_anterior_yaw = 0;
+float erro_acc_h   = 0, erro_anterior_h   = 0;
 
+/// deg2rad
+///
+inline double deg2rad(double deg)
+{
+    return deg * M_PI / 180.;
+}
 
 /// Callback imagem da camera
 ///
@@ -157,16 +167,34 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
 //    for(size_t i = 0; i < dist_validas.size(); i++){
 //        ROS_INFO("Indice: %d   Leitura: %.2f", indices_validos[i], dist_validas[i]);
 //    }
-    // Calcula erro de altitude - variam pouco, usando primeira leitura sempre por padrao
 
-
+    // Para erro de altitude, usar a primeira leitura somente por padrao
+    // Angulo = pct / meio_range * range_angulo/2  ou  diferenca_para_o_centro * incremento_angular_cada_medida
+    //
+    //   |\
+    //   |a\
+    //  h|  \leitura
+    //   |   \
+    //   X---cabo
+    //
+    float distancia_manter = 3, erro_h, h, angulo_leitura;
+    if(dist_validas.size() > 0){
+        // Calculo do angulo e altura h
+        angulo_leitura = float(abs(indices_validos[0] - int(msg_laser->ranges.size())/2)) * msg_laser->angle_increment; // [RAD]
+        h = dist_validas[0]*cosf(angulo_leitura); // [m]
+        // Erro de altitude
+        erro_h = distancia_manter - h;
+//        ROS_INFO("ANGULO: %.2f   h: %.2f   erro: %.2f", angulo_leitura*180/M_PI, h, erro_h);
+    }
     // Calculo do controlador de YAW - atualiza variavel de controle
-    controle_yaw  = -Kp_y*erro;
-    erro_acc     += erro;
-    erro_anterior = erro;
+    controle_yaw      = -Kp_y*erro;
+    erro_acc_yaw     += erro;
+    erro_anterior_yaw = erro;
 
     // Calculo do controlador de altitude - atualiza variavel de controle
-    controle_alt = 0;
+    controle_alt    = Kp_h*erro_h;
+    erro_acc_h     += erro_h;
+    erro_anterior_h = erro_h;
 }
 
 /// Main
@@ -302,7 +330,7 @@ int main(int argc, char **argv)
 
                 ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
                 // Ajusta com a metrica o quanto voar
-                pt.velocity.y = 0.8;            // Avanco com Y [m/s] (positivo para frente)
+                pt.velocity.y = 0.4;            // Avanco com Y [m/s] (positivo para frente)
                 pt.velocity.z = controle_alt; // No eixo de altitude [m/s] (positivo para cima)
                 pt.yaw_rate   = controle_yaw; // Taxa de correcao do controle de YAW
                 // Envia para o drone
