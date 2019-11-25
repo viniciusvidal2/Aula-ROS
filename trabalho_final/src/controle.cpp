@@ -39,6 +39,7 @@ double current_x = 0, current_y = 0, current_alt_local = 0;
 double current_yaw = 0, des_alt = 14;
 
 bool inicio = true, alcancou_altitude = false, alcancou_inicio = false;
+bool torre_alcancada = false; // Vai medir se chegamos a um poste e ai aponta para o proximo poste
 
 ros::Publisher pub_setVel;
 ros::Publisher local_pos_pub;
@@ -48,7 +49,7 @@ mavros_msgs::State current_state;
 cv_bridge::CvImagePtr image_ptr;
 
 float controle_roll, controle_alt;
-float Kp_r = 0.02, Ki_r = 0.00001, Kd_r = 0.0005;
+float Kp_r = 0.02, Ki_r = 0.00000, Kd_r = 0.0005;
 float Kp_h = 2, Ki_h = 0, Kd_h = 0;
 float erro_acc_roll = 0, erro_anterior_r = 0;
 float erro_acc_h    = 0, erro_anterior_h = 0;
@@ -154,13 +155,13 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
             indices_validos.push_back(i);
             dist_validas.push_back(msg_laser->ranges[i]);
             // Atualiza o erro de YAW
-            erro += (centro - i); ///float(msg_laser->ranges.size());
+            erro += (centro - i);
         }
     }
     // Atualiza erro de YAW se estiver muito baixo
     erro = (abs(erro) > 4) ? erro : 0;
     // Controla a existencia de velocidade linear
-    velocidade_linear = (abs(erro) > 8) ? abs(erro)*Kp_r : 1;
+    velocidade_linear = (indices_validos.size() > 0) ? 1.0 : 0;
 
     // Para erro de altitude, usar a primeira leitura somente por padrao
     // Angulo = pct / meio_range * range_angulo/2  ou  diferenca_para_o_centro * incremento_angular_cada_medida
@@ -184,12 +185,12 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
     controle_roll   = Kp_r*erro + Ki_r*erro_acc_roll + Kd_r*(erro - erro_anterior_r);
     erro_acc_roll  += erro;
     erro_anterior_r = erro;
+    ROS_INFO("Velocidade Linear: %.2f", velocidade_linear);
 
     // Calculo do controlador de altitude - atualiza variavel de controle
     controle_alt    = Kp_h*erro_h;
     erro_acc_h     += erro_h;
     erro_anterior_h = erro_h;
-    ROS_INFO("Controle de altitude: %.5f", controle_alt);
 
     // Caso chegue a um local com muitas leituras, ha perigo, por enquanto parar
     if(indices_validos.size() > 8){
@@ -327,7 +328,7 @@ int main(int argc, char **argv)
             alcancou_inicio = chegouNoInicio();
 
         // Se chegamos no inicio do poste, parar de fazer subir e comecar a controlar
-        if(alcancou_inicio && alcancou_altitude){
+        if(alcancou_inicio && alcancou_altitude && !torre_alcancada){
 
 
                 ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
