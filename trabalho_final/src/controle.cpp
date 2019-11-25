@@ -47,19 +47,12 @@ mavros_msgs::State current_state;
 
 cv_bridge::CvImagePtr image_ptr;
 
-float controle_yaw, controle_alt;
-float Kp_y = 0.5, Ki_y = 0.001, Kd_y = 0.3;
+float controle_roll, controle_alt;
+float Kp_r = 0.02, Ki_r = 0.00001, Kd_r = 0.0005;
 float Kp_h = 2, Ki_h = 0, Kd_h = 0;
-float erro_acc_yaw = 0, erro_anterior_yaw = 0;
-float erro_acc_h   = 0, erro_anterior_h   = 0;
+float erro_acc_roll = 0, erro_anterior_r = 0;
+float erro_acc_h    = 0, erro_anterior_h = 0;
 float velocidade_linear = 0.4; // [m/s]
-
-/// deg2rad
-///
-inline double deg2rad(double deg)
-{
-    return deg * M_PI / 180.;
-}
 
 /// Callback imagem da camera
 ///
@@ -160,15 +153,14 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
         if(msg_laser->ranges[i] < msg_laser->range_max){
             indices_validos.push_back(i);
             dist_validas.push_back(msg_laser->ranges[i]);
-//            // Atualiza o erro de YAW
-//            erro += (centro - i)/msg_laser->ranges.size();
+            // Atualiza o erro de YAW
+            erro += (centro - i); ///float(msg_laser->ranges.size());
         }
     }
-    // Atualiza erro de yaw com uma medida so
-    if(indices_validos.size() > 0)
-        erro = (centro - indices_validos[0])/msg_laser->ranges.size();
+    // Atualiza erro de YAW se estiver muito baixo
+    erro = (abs(erro) > 4) ? erro : 0;
     // Controla a existencia de velocidade linear
-    velocidade_linear = (indices_validos.size() > 0) ? 1.1 : 0;
+    velocidade_linear = (abs(erro) > 8) ? abs(erro)*Kp_r : 1;
 
     // Para erro de altitude, usar a primeira leitura somente por padrao
     // Angulo = pct / meio_range * range_angulo/2  ou  diferenca_para_o_centro * incremento_angular_cada_medida
@@ -189,9 +181,9 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
         erro_h = (erro_h > 0.2) ? erro_h : 0;
     }
     // Calculo do controlador de YAW - atualiza variavel de controle
-    controle_yaw      = -1*(Kp_y*erro + Ki_y*erro_acc_yaw + Kd_y*(erro - erro_anterior_yaw));
-    erro_acc_yaw     += erro;
-    erro_anterior_yaw = erro;
+    controle_roll   = Kp_r*erro + Ki_r*erro_acc_roll + Kd_r*(erro - erro_anterior_r);
+    erro_acc_roll  += erro;
+    erro_anterior_r = erro;
 
     // Calculo do controlador de altitude - atualiza variavel de controle
     controle_alt    = Kp_h*erro_h;
@@ -333,11 +325,11 @@ int main(int argc, char **argv)
                 ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
                 // Ajusta com a metrica o quanto voar
                 pt.velocity.y = velocidade_linear; // Avanco com Y [m/s] (positivo para frente)
-                pt.velocity.z = controle_alt; // No eixo de altitude [m/s] (positivo para cima)
-                pt.yaw_rate   = controle_yaw; // Taxa de correcao do controle de YAW
+                pt.velocity.z = controle_alt;      // No eixo de altitude [m/s] (positivo para cima)
+                pt.velocity.x = controle_roll;     // Taxa de correcao do controle de YAW
                 // Envia para o drone
                 pub_setVel.publish(pt);
-                ROS_INFO("Enviando comando de CONTROLE. Controle YAW: %.4f", controle_yaw);
+                ROS_INFO("Enviando comando de CONTROLE. Controle ROLL: %.4f", controle_roll);
                 ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
 
 
