@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="linhaf">
+  <link name="world"/>
+    <joint name="fixed" type="fixed">
+      <parent link="world"/>
+      <child link="base_link"/>
+    </joint>
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="6.84107831109981 -0.299850714378742 5.96104018393503"
+        rpy="0 0 0" />
+      <mass
+        value="961.960889764223" />
+      <inertia
+        ixx="5932.00225628091"
+        ixy="-6.17645556792484"
+        ixz="-81.2602880890273"
+        iyy="61458.5519069856"
+        iyz="-0.16490286642396"
+        izz="55534.7784644376" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="barra1">
+    <inertial>
+      <origin
+        xyz="0.165 4.65662327799907E-17 9.12410046214307"
+        rpy="0 0 0" />
+      <mass
+        value="89.0575222039227" />
+      <inertia
+        ixx="67.1297791005704"
+        ixy="-6.7138287327959E-15"
+        ixz="1.01035853963239E-15"
+        iyy="0.461208800937251"
+        iyz="5.2712172610531E-16"
+        izz="67.0048922023881" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf/meshes/barra1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.776470588235294 0.756862745098039 0.737254901960784 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf/meshes/barra1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="barrajunta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="barra1" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="sup1">
+    <inertial>
+      <origin
+        xyz="0.164999962614628 -1.12499998226861 9.28113909925346"
+        rpy="0 0 0" />
+      <mass
+        value="1.26701099602515" />
+      <inertia
+        ixx="0.0050951471072981"
+        ixy="-4.14323732930178E-09"
+        ixz="4.57701255789595E-10"
+        iyy="0.00459360598156224"
+        iyz="3.63992842483297E-09"
+        izz="0.00239412896212943" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf/meshes/sup1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.529411764705882 0.549019607843137 0.549019607843137 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf/meshes/sup1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="sup1junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="sup1" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="cabo">
+    <inertial>
+      <origin
+        xyz="25.6457935383257 -1.12404905296926 8.62691403166074"
+        rpy="0 0 0" />
+      <mass
+        value="256.612164067276" />
+      <inertia
+        ixx="63.2895146040177"
+        ixy="-6.17645556792484"
+        ixz="-81.9746136579646"
+        iyy="55589.8547596422"
+        iyz="-0.16490286642396"
+        izz="55526.851109607" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf/meshes/cabo.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.92156862745098 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf/meshes/cabo.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="cabo1junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="cabo" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+</robot>

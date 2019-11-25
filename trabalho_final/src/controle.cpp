@@ -178,7 +178,7 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
         h = dist_validas[0]*cosf(angulo_leitura); // [m]
         // Erro de altitude
         erro_h = distancia_manter - h;
-        erro_h = (erro_h > 0.2) ? erro_h : 0;
+        erro_h = (abs(erro_h) > 0.1) ? erro_h : 0;
     }
     // Calculo do controlador de YAW - atualiza variavel de controle
     controle_roll   = Kp_r*erro + Ki_r*erro_acc_roll + Kd_r*(erro - erro_anterior_r);
@@ -189,6 +189,14 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
     controle_alt    = Kp_h*erro_h;
     erro_acc_h     += erro_h;
     erro_anterior_h = erro_h;
+    ROS_INFO("Controle de altitude: %.5f", controle_alt);
+
+    // Caso chegue a um local com muitas leituras, ha perigo, por enquanto parar
+    if(indices_validos.size() > 8){
+        velocidade_linear = 0;
+        controle_alt      = 0;
+        controle_roll     = 0;
+    }
 }
 
 /// Main
@@ -329,7 +337,7 @@ int main(int argc, char **argv)
                 pt.velocity.x = controle_roll;     // Taxa de correcao do controle de YAW
                 // Envia para o drone
                 pub_setVel.publish(pt);
-                ROS_INFO("Enviando comando de CONTROLE. Controle ROLL: %.4f", controle_roll);
+//                ROS_INFO("Enviando comando de CONTROLE. Controle ROLL: %.4f", controle_roll);
                 ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
 
 
