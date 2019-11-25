@@ -38,7 +38,7 @@ double current_lat, current_lon, current_alt_global;
 double current_x = 0, current_y = 0, current_alt_local = 0;
 double current_yaw = 0, des_alt = 14;
 
-bool inicio = true, alcancou_altitude = false, alcancou_inicio = false;
+bool inicio = true, alcancou_altitude = false, alcancou_inicio = false, chegamos_ao_fim = false;
 bool torre_alcancada = false; // Vai medir se chegamos a um poste e ai aponta para o proximo poste
 
 ros::Publisher pub_setVel;
@@ -53,13 +53,35 @@ float Kp_r = 0.02, Ki_r = 0.00000, Kd_r = 0.0005;
 float Kp_h = 2, Ki_h = 0, Kd_h = 0;
 float erro_acc_roll = 0, erro_anterior_r = 0;
 float erro_acc_h    = 0, erro_anterior_h = 0;
-float velocidade_linear = 0.4; // [m/s]
+float velocidade_linear = 1.0; // [m/s]
+// Estrutura de waypoint das torres e vetor para armazenar o caminho
+struct wpt
+{
+    float x; // [m]
+    float y; // [m]
+};
+std::vector<wpt> wpts;
+int wpt_atual = 0; // Indice da torre que estamos viajando para ela
+
+/// Inicia a lista de pontos das nuvens
+///
+void preencheWaypoints(){
+    // Coordenadas dos pontos
+    std::vector<float> xs{1000, 200};
+    std::vector<float> ys{1000, 200};
+    // Coloca no vetor de waypoints para ser seguido
+    for(size_t i=0; i < xs.size(); i++){
+        wpt w = {xs[i], ys[i]};
+        wpts.push_back(w);
+    }
+    wpt_atual = 0; // Garante que estamos indo para a primeira nuvem
+}
 
 /// Callback imagem da camera
 ///
 void escutaCamera(const sensor_msgs::ImageConstPtr& msg){
     // Aqui ja temos a imagem em ponteiro de opencv
-    image_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+//    image_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
 }
 
 /// Callback estado de voo
@@ -75,15 +97,6 @@ void escutaPosicaoGlobal(const sensor_msgs::NavSatFixConstPtr& msg)
     // Pega informacao de coordenadas geograficas para as variaveis globais
     current_lat = msg->latitude; current_lon = msg->longitude;
     current_alt_global = msg->altitude;
-}
-
-/// Callback Bussola
-///
-void escutaBussola(const std_msgs::Float64ConstPtr& msg)
-{
-    // Pega orientacao pela Bussola
-    current_yaw = msg->data;
-    //    cout << "\n\nAtual orientacao: " << current_yaw << "\n\n";
 }
 
 /// Callback Local
@@ -185,7 +198,6 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
     controle_roll   = Kp_r*erro + Ki_r*erro_acc_roll + Kd_r*(erro - erro_anterior_r);
     erro_acc_roll  += erro;
     erro_anterior_r = erro;
-    ROS_INFO("Velocidade Linear: %.2f", velocidade_linear);
 
     // Calculo do controlador de altitude - atualiza variavel de controle
     controle_alt    = Kp_h*erro_h;
@@ -200,6 +212,29 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
     }
 }
 
+/// Verificar se perto das torres e navegar corretamente
+///
+void comportamentoEmTorres(){
+    // Verifica se esta proximo da proxima torre marcada em waypoint
+    if(sqrt( pow(wpts[wpt_atual].x - current_x, 2) + pow(wpts[wpt_atual].y - current_y, 2) ) < 0.5)
+        torre_alcancada = true;
+    // Se estamos sobre a torre, verificar o comportamento segundo a torre em questao e agir
+    if(torre_alcancada){
+        if(wpt_atual < wpts.size() - 1){ // Nao estamos na ultima torre, temos que virar
+            // Descobrir angulo que virar
+
+            // Calcular avanco e nova posicao no frame local
+
+            // Enviar enquanto nao alcancar o comando
+
+        } else { // Estamos na ultima torre, temos que parar
+            chegamos_ao_fim = true;
+        }
+        // Vamos para o proximo waypoint
+        wpt_atual++;
+    }
+}
+
 /// Main
 ///
 int main(int argc, char **argv)
@@ -211,8 +246,6 @@ int main(int argc, char **argv)
     ros::Subscriber subloc = nh.subscribe("/mavros/local_position/pose", 100, escutaPosicaoLocal);
     // Subscriber posicao global
     ros::Subscriber subglo = nh.subscribe("/mavros/global_position/global", 100, escutaPosicaoGlobal);
-    // Subscriber orientacao
-    ros::Subscriber subcom = nh.subscribe("/mavros/global_position/compass_hdg", 100, escutaBussola);
     // Subscriber de estado de voo da aeronave
     ros::Subscriber substt = nh.subscribe("mavros/state", 10, escutaEstado);
     // Subscriber do laser
@@ -222,6 +255,9 @@ int main(int argc, char **argv)
 
     // Publisher de controle
     pub_setVel = nh.advertise<mavros_msgs::PositionTarget>("/mavros/setpoint_raw/local", 100);
+
+    // Inicia a lista de Waypoints das torres
+    preencheWaypoints();
 
     // Inicia o servico de takeoff sobre o drone
     ros::ServiceClient srvTO = nh.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
@@ -328,7 +364,7 @@ int main(int argc, char **argv)
             alcancou_inicio = chegouNoInicio();
 
         // Se chegamos no inicio do poste, parar de fazer subir e comecar a controlar
-        if(alcancou_inicio && alcancou_altitude && !torre_alcancada){
+        if(alcancou_inicio && alcancou_altitude && !torre_alcancada && !chegamos_ao_fim){
 
 
                 ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
@@ -338,10 +374,21 @@ int main(int argc, char **argv)
                 pt.velocity.x = controle_roll;     // Taxa de correcao do controle de YAW
                 // Envia para o drone
                 pub_setVel.publish(pt);
-//                ROS_INFO("Enviando comando de CONTROLE. Controle ROLL: %.4f", controle_roll);
+                ROS_INFO("Enviando comando de CONTROLE.");
                 ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
 
 
+        }
+
+        // Verifica se torre alcancada, se sim, tomar decisao
+        comportamentoEmTorres();
+
+        // Se chegamos ao fim do trajeto, paramos
+        if(chegamos_ao_fim){
+            pt.velocity.y = 0;
+            pt.velocity.z = 0;
+            pt.velocity.x = 0;
+            pub_setVel.publish(pt);
         }
 
         // Spin
