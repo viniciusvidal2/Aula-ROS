@@ -5,6 +5,8 @@
 #include <Eigen/Dense>
 #include <Eigen/Core>
 
+#include <math.h>
+
 #include <mavros/mavros.h>
 #include <mavros/utils.h>
 #include <mavlink/config.h>
@@ -33,10 +35,11 @@ using namespace std;
 /// Variaveis globais
 ///
 double current_lat, current_lon, current_alt_global;
-double current_x = 0, current_y = 0, current_alt_local = 0;
-double current_yaw = 0, des_alt = 18;
+double current_x = 0, current_y = 0, current_z = 0;
+double current_yaw = 0, des_alt = 14;
 
-bool inicio = true, alcancou_inicio = false;
+bool inicio = true, alcancou_altitude = false, alcancou_inicio = false, chegamos_ao_fim = false;
+bool torre_alcancada = false; // Vai medir se chegamos a um poste e ai aponta para o proximo poste
 
 ros::Publisher pub_setVel;
 ros::Publisher local_pos_pub;
@@ -45,19 +48,40 @@ mavros_msgs::State current_state;
 
 cv_bridge::CvImagePtr image_ptr;
 
-float controle_yaw, controle_alt;
-float Kp_y = 2, Ki_y = 0, Kd_y = 0;
-float erro_acc = 0, erro_anterior = 0;
+float controle_roll, controle_alt;
+float Kp_r = 0.02, Ki_r = 0.00000, Kd_r = 0.0005;
+float Kp_h = 1, Ki_h = 0, Kd_h = 0;
+float erro_acc_roll = 0, erro_anterior_r = 0;
+float erro_acc_h    = 0, erro_anterior_h = 0;
+float velocidade_linear = 1.0; // [m/s]
+// Estrutura de waypoint das torres e vetor para armazenar o caminho
+struct wpt
+{
+    float x; // [m]
+    float y; // [m]
+};
+std::vector<wpt> wpts;
+int wpt_atual = 0; // Indice da torre que estamos viajando para ela
 
-
-int contador = 0;
-
+/// Inicia a lista de pontos das nuvens
+///
+void preencheWaypoints(){
+    // Coordenadas dos pontos
+    std::vector<float> xs{54.91, 76.10, 126.02}; // [m]
+    std::vector<float> ys{ 5.60, 51.95,  51.75}; // [m]
+    // Coloca no vetor de waypoints para ser seguido
+    for(size_t i=0; i < xs.size(); i++){
+        wpt w = {xs[i], ys[i]};
+        wpts.push_back(w);
+    }
+    wpt_atual = 0; // Garante que estamos indo para a primeira nuvem
+}
 
 /// Callback imagem da camera
 ///
 void escutaCamera(const sensor_msgs::ImageConstPtr& msg){
     // Aqui ja temos a imagem em ponteiro de opencv
-    image_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+//    image_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
 }
 
 /// Callback estado de voo
@@ -75,32 +99,45 @@ void escutaPosicaoGlobal(const sensor_msgs::NavSatFixConstPtr& msg)
     current_alt_global = msg->altitude;
 }
 
-/// Callback Bussola
-///
-void escutaBussola(const std_msgs::Float64ConstPtr& msg)
-{
-    // Pega orientacao pela Bussola
-    current_yaw = msg->data;
-    //    cout << "\n\nAtual orientacao: " << current_yaw << "\n\n";
-}
-
 /// Callback Local
 ///
 void escutaPosicaoLocal(const geometry_msgs::PoseStampedConstPtr& msg)
 {
     // Le posicao atual a partir da mensagem
-    current_x = msg->pose.position.x; current_y = msg->pose.position.y; current_alt_local = msg->pose.position.z;
+    current_x = msg->pose.position.x; current_y = msg->pose.position.y; current_z = msg->pose.position.z;
+}
+
+/// Verifica se chegou na altitude desejada antes de mover ao inicio do poste
+///
+bool chegouNaAltitude(float g){
+    // Enquando nao estamos na altitude, publicar e retornar false
+    if(abs(current_z - g) > 0.1){
+        // Enviar comando
+        geometry_msgs::PoseStamped pose;
+        pose.pose.position.z = g;
+        pose.pose.position.x = current_x;
+        pose.pose.position.y = current_y;
+        local_pos_pub.publish(pose);
+        ROS_INFO("Subindo o drone ate %.2f metros antes de ir para o inicio....", g);
+
+        // Retornar false - nao chegamos ainda
+        return false;
+    } else { // Se chegamos, mandar logo true e seguir em frente
+
+        return true;
+
+    }
 }
 
 /// Verifica se chegou no inicio do poste
 ///
 bool chegouNoInicio(){
-    float inix = 5.5, iniy = 5, iniz = 14; // Inicio do poste [m]
+    float inix = 6.5, iniy = 5, iniz = 14; // Inicio do poste [m]
     // Enquanto nao estamos proximos do ponto de inicio, enviar comando para la
     // Uma vez que chegar, nao entrar mais
     if(sqrt( pow(inix - current_x        , 2) +
              pow(iniy - current_y        , 2) +
-             pow(iniz - current_alt_local, 2) ) >= 0.1){
+             pow(iniz - current_z, 2) ) >= 0.1){
         // Enviar comando
         geometry_msgs::PoseStamped pose;
         pose.pose.position.z = iniz;
@@ -131,20 +168,98 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
             indices_validos.push_back(i);
             dist_validas.push_back(msg_laser->ranges[i]);
             // Atualiza o erro de YAW
-            erro += (centro - i)/msg_laser->ranges.size();
+            erro += (centro - i);
         }
     }
-//    ROS_WARN("LEITURAS NOVAS:");
-//    for(size_t i = 0; i < dist_validas.size(); i++){
-//        ROS_INFO("Indice: %d   Leitura: %.2f", indices_validos[i], dist_validas[i]);
-//    }
-    // Calcula erro de altitude - variam pouco, usando primeira leitura sempre por padrao
+    // Atualiza erro de YAW se estiver muito baixo
+    erro = (abs(erro) > 4) ? erro : 0;
+    // Controla a existencia de velocidade linear
+    velocidade_linear = (indices_validos.size() > 0) ? 2.0 : 0;
 
-
+    // Para erro de altitude, usar a primeira leitura somente por padrao
+    // Angulo = pct / meio_range * range_angulo/2  ou  diferenca_para_o_centro * incremento_angular_cada_medida
+    //
+    //   |\
+    //   |a\
+    //  h|  \leitura
+    //   |   \
+    //   X---cabo
+    //
+    float distancia_manter = 3, erro_h, h, angulo_leitura;
+    if(dist_validas.size() > 0){
+        // Calculo do angulo e altura h
+        angulo_leitura = float(abs(indices_validos[0] - int(msg_laser->ranges.size())/2)) * msg_laser->angle_increment; // [RAD]
+        h = dist_validas[0]*cosf(angulo_leitura); // [m]
+        // Erro de altitude
+        erro_h = distancia_manter - h;
+        erro_h = (abs(erro_h) > 0.1) ? erro_h : 0;
+    }
     // Calculo do controlador de YAW - atualiza variavel de controle
-    controle_yaw  = Kp_y*erro;
-    erro_acc     += erro;
-    erro_anterior = erro;
+    controle_roll   = (torre_alcancada == false) ? Kp_r*erro + Ki_r*erro_acc_roll + Kd_r*(erro - erro_anterior_r) : 0;
+    erro_acc_roll  += erro;
+    erro_anterior_r = erro;
+
+    // Calculo do controlador de altitude - atualiza variavel de controle
+    controle_alt    = (torre_alcancada == false) ? Kp_h*erro_h : 0;
+    erro_acc_h     += erro_h;
+    erro_anterior_h = erro_h;
+
+    // Caso chegue a um local com muitas leituras, ha perigo, por enquanto parar, se nao for torre
+    if(indices_validos.size() > 80 && !torre_alcancada){
+        velocidade_linear = 0;
+        controle_alt      = 0;
+        controle_roll     = 0;
+    }
+}
+
+/// Verificar se perto das torres e navegar corretamente
+///
+void comportamentoEmTorres(){
+    // Verifica se esta proximo da proxima torre marcada em waypoint
+    ROS_INFO("Distancia da torre = %.2f", sqrt( pow(wpts[wpt_atual].x - current_x, 2) + pow(wpts[wpt_atual].y - current_y, 2) ));
+    if(sqrt( pow(wpts[wpt_atual].x - current_x, 2) + pow(wpts[wpt_atual].y - current_y, 2) ) < 3)
+        torre_alcancada = true;
+    // Se estamos sobre a torre, verificar o comportamento segundo a torre em questao e agir
+    if(torre_alcancada){
+        if(wpt_atual < wpts.size() - 1){ // Nao estamos na ultima torre, temos que virar
+            // Descobrir angulo que virar
+            float theta = atan2(wpts[wpt_atual+1].y - wpts[wpt_atual].y, wpts[wpt_atual+1].x - wpts[wpt_atual].x);
+            // Cria mensagem
+            mavros_msgs::PositionTarget pt;
+            pt.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED; // Enviamos aqui no frame do corpo do drone, Y a frente, X a esquerda, Z para cima
+            pt.type_mask = mavros_msgs::PositionTarget::IGNORE_VX  | mavros_msgs::PositionTarget::IGNORE_VY  | mavros_msgs::PositionTarget::IGNORE_VZ  | // Ignora velocidade
+                           mavros_msgs::PositionTarget::IGNORE_AFX | mavros_msgs::PositionTarget::IGNORE_AFY | mavros_msgs::PositionTarget::IGNORE_AFZ | // Ignora aceleracao
+                           mavros_msgs::PositionTarget::IGNORE_YAW_RATE;                                                                                 // Ignora YAW_RATE
+            // Primeiro enviar YAW
+            pt.position.x = current_x;
+            pt.position.y = current_y;
+            pt.position.z = current_z;
+            pt.yaw = theta;
+            ros::Rate r(7);
+//            for(int i=0; i < 50; i++){
+//                pub_setVel.publish(pt);
+//                r.sleep();
+//                ROS_INFO("Estamos virando ...");
+//            }
+            // Agora avancar posicao
+//            pt.type_mask = pt.type_mask | mavros_msgs::PositionTarget::IGNORE_YAW;
+            pt.coordinate_frame = mavros_msgs::PositionTarget::FRAME_LOCAL_NED;
+            pt.position.x = wpts[wpt_atual].x + 2*cos(theta);
+            pt.position.y = wpts[wpt_atual].y + 2.5*sin(theta);
+            pt.position.z = current_z;
+            for(int i=0; i < 100; i++){
+                pub_setVel.publish(pt);
+            ROS_INFO("Estamos avancando ...");
+                r.sleep();
+            }
+        } else { // Estamos na ultima torre, temos que parar
+            chegamos_ao_fim = true;
+        }
+        // Vamos para o proximo waypoint
+        wpt_atual++;
+        // Torre nao esta mais alcancada seu animal
+        torre_alcancada = false;
+    }
 }
 
 /// Main
@@ -158,8 +273,6 @@ int main(int argc, char **argv)
     ros::Subscriber subloc = nh.subscribe("/mavros/local_position/pose", 100, escutaPosicaoLocal);
     // Subscriber posicao global
     ros::Subscriber subglo = nh.subscribe("/mavros/global_position/global", 100, escutaPosicaoGlobal);
-    // Subscriber orientacao
-    ros::Subscriber subcom = nh.subscribe("/mavros/global_position/compass_hdg", 100, escutaBussola);
     // Subscriber de estado de voo da aeronave
     ros::Subscriber substt = nh.subscribe("mavros/state", 10, escutaEstado);
     // Subscriber do laser
@@ -169,6 +282,9 @@ int main(int argc, char **argv)
 
     // Publisher de controle
     pub_setVel = nh.advertise<mavros_msgs::PositionTarget>("/mavros/setpoint_raw/local", 100);
+
+    // Inicia a lista de Waypoints das torres
+    preencheWaypoints();
 
     // Inicia o servico de takeoff sobre o drone
     ros::ServiceClient srvTO = nh.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
@@ -231,8 +347,10 @@ int main(int argc, char **argv)
 
     // Cria a mensagem que vai para o controle
     mavros_msgs::PositionTarget pt;
-    pt.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_OFFSET_NED; // Enviamos aqui no frame do corpo do drone, Y a frente, X a esquerda, Z para cima
-    pt.type_mask = mavros_msgs::PositionTarget::IGNORE_PZ; // Assim tudo que e de posicao e ignorado, queremos mesmo e velocidade
+    pt.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED; // Enviamos aqui no frame do corpo do drone, Y a frente, X a esquerda, Z para cima
+    pt.type_mask = mavros_msgs::PositionTarget::IGNORE_PX  | mavros_msgs::PositionTarget::IGNORE_PY  | mavros_msgs::PositionTarget::IGNORE_PZ  | // Ignora posicao
+                   mavros_msgs::PositionTarget::IGNORE_AFX | mavros_msgs::PositionTarget::IGNORE_AFY | mavros_msgs::PositionTarget::IGNORE_AFZ | // Ignora aceleracao
+                   mavros_msgs::PositionTarget::IGNORE_YAW;                                                                                      // Ignora YAW
 
     ////////////////////////
     /// LOOP DE CONTROLE ///
@@ -254,7 +372,7 @@ int main(int argc, char **argv)
             takeoff.request.longitude = current_lon;
             takeoff.request.altitude  = des_alt; // Aqui em metros e relativa
             if(srvTO.call(takeoff))
-                ROS_INFO("Drone subindo para altitude de %.2f metros, LAT: %f  LON %f ...", des_alt, current_lat, current_lon);
+                ROS_INFO("Sucesso TakeOff.");
             else
                 ROS_INFO("Nao foi possivel subir o drone.");
             // Inicio nao existira mais, e manda subir aqui so por desencargo
@@ -265,46 +383,49 @@ int main(int argc, char **argv)
             ROS_INFO("Subindo !!");
             inicio = false; // So uma vez e necessario
         }
+        // Enquanto nao alcancamos altitude, nem ao ponto vamos
+        if(!alcancou_altitude)
+            alcancou_altitude = chegouNaAltitude(des_alt);
         // Enquanto nao estamos no inicio desejado, continuar enviando essa posicao para o drone
-        if(!alcancou_inicio)
+        if(!alcancou_inicio && alcancou_altitude)
             alcancou_inicio = chegouNoInicio();
 
         // Se chegamos no inicio do poste, parar de fazer subir e comecar a controlar
-        if(alcancou_inicio){
+        if(alcancou_inicio && alcancou_altitude && !torre_alcancada && !chegamos_ao_fim){
 
 
-//            if(contador == 0){
                 ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
                 // Ajusta com a metrica o quanto voar
-                pt.velocity.y = 1;            // Avanco com Y [m/s] (positivo para frente)
-//                pt.velocity.x = -2;
-                pt.velocity.z = 0;   // No eixo de altitude [m/s] (positivo para cima)
-                pt.yaw_rate   = 0.2; // Taxa de correcao do controle de YAW
-                pt.yaw        = 2; // Aqui está o controle, ainda e misterio
+                pt.velocity.y = velocidade_linear; // Avanco com Y [m/s] (positivo para frente)
+                pt.velocity.z = controle_alt;      // No eixo de altitude [m/s] (positivo para cima)
+                pt.velocity.x = controle_roll;     // Taxa de correcao do controle de YAW
                 // Envia para o drone
                 pub_setVel.publish(pt);
-                ROS_INFO("Enviando comando de CONTROLE.");
-                ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
-//            contador ++;
-//            } else {
-//                ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
-//                // Ajusta com a metrica o quanto voar
-//                pt.velocity.y = 0;            // Avanco com Y [m/s] (positivo para frente)
-//                pt.velocity.z = 0;   // No eixo de altitude [m/s] (positivo para cima)
-//                pt.yaw_rate   = 0; // Taxa de correcao do controle de YAW
-//                pt.yaw        = 0; // Aqui está o controle, ainda e misterio
-//                // Envia para o drone
-//                pub_setVel.publish(pt);
 //                ROS_INFO("Enviando comando de CONTROLE.");
-//                ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
-//            }
+                ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
 
 
         }
 
+        // Verifica se torre alcancada, se sim, tomar decisao
+        comportamentoEmTorres();
+
+        // Se chegamos ao fim do trajeto, paramos
+        if(chegamos_ao_fim){
+            pt.velocity.y = 0;
+            pt.velocity.z = 0;
+            pt.velocity.x = 0;
+            pub_setVel.publish(pt);
+            ROS_WARN("Chegamos ao fim, ta doendo sim...");
+            ROS_WARN("Eu chego a perder a voz       ...");
+            ROS_WARN("So resta chorar e se lamentar ...");
+            ROS_WARN("Pelo que restou de nos        ...");
+            ros::shutdown();
+        }
+
         // Spin
-        ros::spinOnce();
         r.sleep();
+        ros::spinOnce();
     }
 
     return 0;

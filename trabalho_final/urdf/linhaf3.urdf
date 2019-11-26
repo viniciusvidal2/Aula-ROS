@@ -1,0 +1,794 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="linhaf3">
+  <link name="world"/>
+  <joint name="fixed" type="fixed">
+      <parent link="world"/>
+      <child link="base_link"/>
+  </joint>
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="0 0 5"
+        rpy="0 0 0" />
+      <mass
+        value="705.348725696948" />
+      <inertia
+        ixx="5868.71274167689"
+        ixy="6.21949571884484E-19"
+        ixz="0.714325568937374"
+        iyy="5868.69714734345"
+        iyz="3.17415996263369E-16"
+        izz="7.92735483064776" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="barra1">
+    <inertial>
+      <origin
+        xyz="0.165 5.4479E-17 9.1241"
+        rpy="0 0 0" />
+      <mass
+        value="89.058" />
+      <inertia
+        ixx="67.13"
+        ixy="-6.7138E-15"
+        ixz="1.0104E-15"
+        iyy="0.46121"
+        iyz="5.2543E-16"
+        izz="67.005" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/barra1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.77647 0.75686 0.73725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/barra1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="barrajunta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="barra1" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="sup1">
+    <inertial>
+      <origin
+        xyz="0.165 -1.125 9.2811"
+        rpy="0 0 0" />
+      <mass
+        value="1.267" />
+      <inertia
+        ixx="0.0050951"
+        ixy="-4.1432E-09"
+        ixz="4.577E-10"
+        iyy="0.0045936"
+        iyz="3.6399E-09"
+        izz="0.0023941" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/sup1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.52941 0.54902 0.54902 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/sup1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="sup1junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="sup1" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="cabo1">
+    <inertial>
+      <origin
+        xyz="25.646 -1.124 8.6159"
+        rpy="0 0 0" />
+      <mass
+        value="256.61" />
+      <inertia
+        ixx="63.229"
+        ixy="-6.1765"
+        ixz="-58.062"
+        iyy="55590"
+        iyz="-0.16224"
+        izz="55527" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/cabo1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89804 0.92157 0.92941 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/cabo1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="cabo1junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="cabo1" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="poste2">
+    <inertial>
+      <origin
+        xyz="49.917 -0.56153 4.9692"
+        rpy="0 0 0" />
+      <mass
+        value="705.35" />
+      <inertia
+        ixx="5868.7"
+        ixy="0.0056329"
+        ixz="0.28057"
+        iyy="5868.7"
+        iyz="0.65692"
+        izz="7.9274" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/poste2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/poste2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="poste2junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="poste2" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="barra2">
+    <inertial>
+      <origin
+        xyz="49.982 -0.40957 9.1022"
+        rpy="0 0 0" />
+      <mass
+        value="89.058" />
+      <inertia
+        ixx="10.746"
+        ixy="24.081"
+        ixz="-9.7682E-16"
+        iyy="56.845"
+        iyz="1.3893E-15"
+        izz="67.005" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/barra2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.77647 0.75686 0.73725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/barra2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="barra2junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="barra2" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="sup2">
+    <inertial>
+      <origin
+        xyz="51.016 -0.85144 9.2592"
+        rpy="0 0 0" />
+      <mass
+        value="1.267" />
+      <inertia
+        ixx="0.004671"
+        ixy="0.00018117"
+        ixz="-3.1676E-09"
+        iyy="0.0050178"
+        iyz="1.8506E-09"
+        izz="0.0023941" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/sup2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.52941 0.54902 0.54902 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/sup2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="sup2junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="sup2" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="cabo2">
+    <inertial>
+      <origin
+        xyz="61.035 22.604 8.6056"
+        rpy="0 0 0" />
+      <mass
+        value="256.86" />
+      <inertia
+        ixx="47155"
+        ixy="-20120"
+        ixz="-34.04"
+        iyy="8659.9"
+        iyz="-79.178"
+        izz="55689" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/cabo2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89804 0.92157 0.92941 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/cabo2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="cabo2junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="cabo2" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="poste3">
+    <inertial>
+      <origin
+        xyz="71.102 46.959 4.9692"
+        rpy="0 0 0" />
+      <mass
+        value="705.35" />
+      <inertia
+        ixx="5868.7"
+        ixy="0.00011215"
+        ixz="0.71431"
+        iyy="5868.7"
+        iyz="0.0051373"
+        izz="7.9274" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/poste3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/poste3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="poste3junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="poste3" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="barra3">
+    <inertial>
+      <origin
+        xyz="71.267 46.96 9.1021"
+        rpy="0 0 0" />
+      <mass
+        value="89.058" />
+      <inertia
+        ixx="67.126"
+        ixy="0.47946"
+        ixz="1.2142E-15"
+        iyy="0.46466"
+        iyz="-3.1338E-15"
+        izz="67.005" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/barra3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.77647 0.75686 0.73725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/barra3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="barra3junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="barra3" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="sup3">
+    <inertial>
+      <origin
+        xyz="71.275 45.835 9.2592"
+        rpy="0 0 0" />
+      <mass
+        value="1.267" />
+      <inertia
+        ixx="0.0050951"
+        ixy="3.6028E-06"
+        ixz="4.3151E-10"
+        iyy="0.0045936"
+        iyz="3.6431E-09"
+        izz="0.0023941" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/sup3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.52941 0.54902 0.54902 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/sup3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="sup3junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="sup3" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="cabo3">
+    <inertial>
+      <origin
+        xyz="96.756 46.02 8.6049"
+        rpy="0 0 0" />
+      <mass
+        value="256.61" />
+      <inertia
+        ixx="66.251"
+        ixy="-405.52"
+        ixz="-81.97"
+        iyy="55587"
+        iyz="-0.76604"
+        izz="55527" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/cabo3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89804 0.92157 0.92941 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/cabo3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="cabo3junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="cabo3" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="poste4">
+    <inertial>
+      <origin
+        xyz="121.02 46.757 4.9691"
+        rpy="0 0 0" />
+      <mass
+        value="705.35" />
+      <inertia
+        ixx="5868.7"
+        ixy="0.0055547"
+        ixz="0.27584"
+        iyy="5868.7"
+        iyz="0.65892"
+        izz="7.9274" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/poste4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/poste4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="poste4junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="poste4" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="barra4">
+    <inertial>
+      <origin
+        xyz="121.09 46.909 9.1021"
+        rpy="0 0 0" />
+      <mass
+        value="89.058" />
+      <inertia
+        ixx="10.402"
+        ixy="23.747"
+        ixz="-3.5146E-14"
+        iyy="57.189"
+        iyz="1.5646E-14"
+        izz="67.005" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/barra4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.77647 0.75686 0.73725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/barra4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="barra4junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="barra4" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="sup4">
+    <inertial>
+      <origin
+        xyz="122.12 46.475 9.2591"
+        rpy="0 0 0" />
+      <mass
+        value="1.267" />
+      <inertia
+        ixx="0.0046684"
+        ixy="0.00017865"
+        ixz="-3.1809E-09"
+        iyy="0.0050204"
+        iyz="1.8278E-09"
+        izz="0.0023941" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/sup4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.52941 0.54902 0.54902 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://linhaf3/meshes/sup4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="sup4junta"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="sup4" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+</robot>
