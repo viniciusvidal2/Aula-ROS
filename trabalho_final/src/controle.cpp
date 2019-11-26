@@ -49,7 +49,7 @@ mavros_msgs::State current_state;
 cv_bridge::CvImagePtr image_ptr;
 
 float controle_roll, controle_alt;
-float Kp_r = 0.02, Ki_r = 0.00000, Kd_r = 0.0005;
+float Kp_r = 0.02, Ki_r = 0.00000, Kd_r = 0.005;
 float Kp_h = 1, Ki_h = 0, Kd_h = 0;
 float erro_acc_roll = 0, erro_anterior_r = 0;
 float erro_acc_h    = 0, erro_anterior_h = 0;
@@ -135,8 +135,8 @@ bool chegouNoInicio(){
     float inix = 6.5, iniy = 5, iniz = 14; // Inicio do poste [m]
     // Enquanto nao estamos proximos do ponto de inicio, enviar comando para la
     // Uma vez que chegar, nao entrar mais
-    if(sqrt( pow(inix - current_x        , 2) +
-             pow(iniy - current_y        , 2) +
+    if(sqrt( pow(inix - current_x, 2) +
+             pow(iniy - current_y, 2) +
              pow(iniz - current_z, 2) ) >= 0.1){
         // Enviar comando
         geometry_msgs::PoseStamped pose;
@@ -172,7 +172,7 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
         }
     }
     // Atualiza erro de YAW se estiver muito baixo
-    erro = (abs(erro) > 4) ? erro : 0;
+    erro = (abs(erro) > 2) ? erro : 0;
     // Controla a existencia de velocidade linear
     velocidade_linear = (indices_validos.size() > 0) ? 2.0 : 0;
 
@@ -216,7 +216,6 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
 ///
 void comportamentoEmTorres(){
     // Verifica se esta proximo da proxima torre marcada em waypoint
-    ROS_INFO("Distancia da torre = %.2f", sqrt( pow(wpts[wpt_atual].x - current_x, 2) + pow(wpts[wpt_atual].y - current_y, 2) ));
     if(sqrt( pow(wpts[wpt_atual].x - current_x, 2) + pow(wpts[wpt_atual].y - current_y, 2) ) < 3)
         torre_alcancada = true;
     // Se estamos sobre a torre, verificar o comportamento segundo a torre em questao e agir
@@ -247,7 +246,7 @@ void comportamentoEmTorres(){
             pt.position.x = wpts[wpt_atual].x + 2*cos(theta);
             pt.position.y = wpts[wpt_atual].y + 2.5*sin(theta);
             pt.position.z = current_z;
-            for(int i=0; i < 100; i++){
+            for(int i=0; i < 50; i++){
                 pub_setVel.publish(pt);
             ROS_INFO("Estamos avancando ...");
                 r.sleep();
