@@ -1577,7 +1577,7 @@
           <joint_control_pid>
             <p>0.8</p>
             <i>0.1</i>
-            <d>0.02</d>
+            <d>9.22</d>
             <iMax>0</iMax>
             <iMin>0</iMin>
             <cmdMax>1.0</cmdMax>
@@ -1643,8 +1643,8 @@
 		   <horizontal>
 		   <samples>120</samples>
 		   <resolution>1</resolution>
-		   <min_angle>-0.52359</min_angle>
-		   <max_angle>0.52359</max_angle>
+                   <min_angle>-1.04359</min_angle>
+                   <max_angle>1.04359</max_angle>
 		   </horizontal>
 		</scan>
 		<range>
