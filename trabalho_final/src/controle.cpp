@@ -49,7 +49,7 @@ mavros_msgs::State current_state;
 cv_bridge::CvImagePtr image_ptr;
 
 float controle_roll, controle_alt;
-float Kp_r = 0.02, Ki_r = 0.00000, Kd_r = 0.005;
+float Kp_r = 0.04, Ki_r = 0.00000, Kd_r = 0.005;
 float Kp_h = 1, Ki_h = 0, Kd_h = 0;
 float erro_acc_roll = 0, erro_anterior_r = 0;
 float erro_acc_h    = 0, erro_anterior_h = 0;
@@ -174,7 +174,7 @@ void escutaLaser(const sensor_msgs::LaserScanConstPtr &msg_laser){
     // Atualiza erro de YAW se estiver muito baixo
     erro = (abs(erro) > 2) ? erro : 0;
     // Controla a existencia de velocidade linear
-    velocidade_linear = (indices_validos.size() > 0) ? 2.0 : 0;
+    velocidade_linear = (indices_validos.size() > 0) ? 10.0 : 0;
 
     // Para erro de altitude, usar a primeira leitura somente por padrao
     // Angulo = pct / meio_range * range_angulo/2  ou  diferenca_para_o_centro * incremento_angular_cada_medida
@@ -393,15 +393,15 @@ int main(int argc, char **argv)
         if(alcancou_inicio && alcancou_altitude && !torre_alcancada && !chegamos_ao_fim){
 
 
-                ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
-                // Ajusta com a metrica o quanto voar
-                pt.velocity.y = velocidade_linear; // Avanco com Y [m/s] (positivo para frente)
-                pt.velocity.z = controle_alt;      // No eixo de altitude [m/s] (positivo para cima)
-                pt.velocity.x = controle_roll;     // Taxa de correcao do controle de YAW
-                // Envia para o drone
-                pub_setVel.publish(pt);
-//                ROS_INFO("Enviando comando de CONTROLE.");
-                ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
+            ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
+            // Ajusta com a metrica o quanto voar
+            pt.velocity.y = velocidade_linear; // Avanco com Y [m/s] (positivo para frente)
+            pt.velocity.z = controle_alt;      // No eixo de altitude [m/s] (positivo para cima)
+            pt.velocity.x = controle_roll;     // Taxa de correcao do controle de YAW
+            // Envia para o drone
+            pub_setVel.publish(pt);
+            ROS_INFO("Enviando comando de CONTROLE.");
+            ///////// AQUI SIM ENVIA COMANDOS PARA SEGUIR LINHA /////////
 
 
         }
