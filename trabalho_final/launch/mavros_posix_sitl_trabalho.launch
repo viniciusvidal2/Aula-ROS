@@ -52,6 +52,13 @@
           -x 5 -y 5 -z 0
           -R 0 -P 0 -Y 0"
     output="screen" />
+    <!-- Chamando o solo -->
+    <node name="spawn_robot" pkg="gazebo_ros" type="spawn_model"
+          args="-file /$(find trabalho_final)/models/my_ground_plane/model.sdf
+                -sdf
+		-model my_ground_plane
+ 	      -x 50 -y 50 -z 0
+              -R 0 -P 0 -Y 0"/>
     <!-- MAVROS -->
     <include file="$(find mavros)/launch/px4.launch">
         <!-- GCS link is provided by SITL -->

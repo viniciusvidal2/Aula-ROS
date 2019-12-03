@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
   <include
     file="$(find gazebo_ros)/launch/empty_world.launch" />
@@ -12,6 +13,12 @@
     type="spawn_model"
     args="-file $(find linhaf3)/urdf/linhaf3.urdf -urdf -model linhaf3"
     output="screen" />
+  <node name="spawn_robot" pkg="gazebo_ros" type="spawn_model"
+          args="-file /$(find linhaf3)/models/my_ground_plane/model.sdf
+                -sdf
+		-model my_ground_plane
+ 	      -x 50 -y 50 -z 0
+              -R 0 -P 0 -Y 0"/>
   <node
     name="fake_joint_calibration"
     pkg="rostopic"
