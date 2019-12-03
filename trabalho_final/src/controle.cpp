@@ -1,5 +1,4 @@
 #include "ros/ros.h"
-#include "std_msgs/String.h"
 
 #include <Eigen/Geometry>
 #include <Eigen/Dense>
@@ -30,7 +29,10 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <string>
+
 using namespace std;
+using namespace cv;
 
 /// Variaveis globais
 ///
@@ -49,7 +51,7 @@ mavros_msgs::State current_state;
 cv_bridge::CvImagePtr image_ptr;
 
 float controle_roll, controle_alt;
-float Kp_r = 0.02, Ki_r = 0.00000, Kd_r = 0.005;
+float Kp_r = 0.04, Ki_r = 0.00000, Kd_r = 0.005;
 float Kp_h = 1, Ki_h = 0, Kd_h = 0;
 float erro_acc_roll = 0, erro_anterior_r = 0;
 float erro_acc_h    = 0, erro_anterior_h = 0;
@@ -62,6 +64,8 @@ struct wpt
 };
 std::vector<wpt> wpts;
 int wpt_atual = 0; // Indice da torre que estamos viajando para ela
+
+int contador_imagens = 0; // Contador de imagens para escrever na pasta
 
 /// Inicia a lista de pontos das nuvens
 ///
@@ -80,8 +84,16 @@ void preencheWaypoints(){
 /// Callback imagem da camera
 ///
 void escutaCamera(const sensor_msgs::ImageConstPtr& msg){
-    // Aqui ja temos a imagem em ponteiro de opencv
-//    image_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    // So funciona se ja vamos fazer a missao
+    if(alcancou_altitude && alcancou_inicio){
+        // Aqui ja temos a imagem em ponteiro de opencv
+        image_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+        // Salvando a imagem
+        char* home;
+        home = getenv("HOME");
+        imwrite(std::string(home)+"/imagens_trabalho/"+std::to_string(contador_imagens)+".jpg", image_ptr->image);
+        contador_imagens++;
+    }
 }
 
 /// Callback estado de voo
@@ -277,7 +289,7 @@ int main(int argc, char **argv)
     // Subscriber do laser
     ros::Subscriber sublsr = nh.subscribe("/scan1", 100, escutaLaser);
     // Subscriber da imagem
-    ros::Subscriber subima = nh.subscribe("/cgo3_camera/image_raw", 10, escutaCamera);
+    ros::Subscriber subima = nh.subscribe("/cgo3_camera/image_raw", 1, escutaCamera);
 
     // Publisher de controle
     pub_setVel = nh.advertise<mavros_msgs::PositionTarget>("/mavros/setpoint_raw/local", 100);
