@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "Vamos ligar o simulador da PX4"
-cd ~/src/Firmware
+cd ~/Firmware
 DONT_RUN=1 make px4_sitl gazebo_typhoon_h480
 echo "Ajustando variaveis"
 source Tools/setup_gazebo.bash $(pwd) $(pwd)/build/px4_sitl_default

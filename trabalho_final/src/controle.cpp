@@ -51,11 +51,13 @@ mavros_msgs::State current_state;
 cv_bridge::CvImagePtr image_ptr;
 
 float controle_roll, controle_alt;
-float Kp_r = 0.04, Ki_r = 0.00000, Kd_r = 0.005;
-float Kp_h = 1, Ki_h = 0, Kd_h = 0;
+float Kp_r = 0.1, Ki_r = 0.00000, Kd_r = 0.005;
+float Kp_h = 2, Ki_h = 0, Kd_h = 0.1;
 float erro_acc_roll = 0, erro_anterior_r = 0;
 float erro_acc_h    = 0, erro_anterior_h = 0;
-float velocidade_linear = 1.0; // [m/s]
+float velocidade_linear = 3.0; // [m/s]
+
+vector<float> posicoes_x, posicoes_y, posicoes_z;
 // Estrutura de waypoint das torres e vetor para armazenar o caminho
 struct wpt
 {
@@ -79,6 +81,27 @@ void preencheWaypoints(){
         wpts.push_back(w);
     }
     wpt_atual = 0; // Garante que estamos indo para a primeira nuvem
+}
+
+/// Salva vetor de posiçoes ao fim como arquivo .mat
+///
+template <typename T>
+void	save_vector_as_matrix( const std::string& name, const std::vector<T>& matrix, ofstream &FILE )
+{
+    std::size_t	columns;
+    columns = matrix.size();
+    std::string	nameLine = "# name: ", typeLine = "# type: matrix";
+    std::string	rowsLine = "# rows: 1", columnsLine = "# columns: ";
+    nameLine += name;
+    FILE << nameLine << endl;
+    FILE << typeLine << endl;
+    FILE << rowsLine << endl;
+    FILE << columnsLine << columns << endl;
+
+    for ( std::size_t column = 0; column < columns; column++ )
+        FILE << " " << matrix[column];
+
+    FILE << "\n\n" << endl;
 }
 
 /// Callback imagem da camera
@@ -117,6 +140,10 @@ void escutaPosicaoLocal(const geometry_msgs::PoseStampedConstPtr& msg)
 {
     // Le posicao atual a partir da mensagem
     current_x = msg->pose.position.x; current_y = msg->pose.position.y; current_z = msg->pose.position.z;
+    // Salva para ser escrito ao final
+    if(alcancou_inicio && alcancou_altitude){
+        posicoes_x.push_back(current_x); posicoes_y.push_back(current_y); posicoes_z.push_back(current_z);
+    }
 }
 
 /// Verifica se chegou na altitude desejada antes de mover ao inicio do poste
@@ -427,6 +454,23 @@ int main(int argc, char **argv)
             pt.velocity.z = 0;
             pt.velocity.x = 0;
             pub_setVel.publish(pt);
+            // Salvar vetores de posicao
+            char* home;
+            home = getenv("HOME");
+            std::string caminho_x = std::string(home)+"/imagens_trabalho/caminho_x.mat";
+            std::string caminho_y = std::string(home)+"/imagens_trabalho/caminho_y.mat";
+            std::string caminho_z = std::string(home)+"/imagens_trabalho/caminho_z.mat";
+            ofstream cx, cy, cz;
+            cx.open(caminho_x, ios::out | ios::trunc | ios::binary);
+            save_vector_as_matrix("caminho_x", posicoes_x, cx);
+            cx.close();
+            cy.open(caminho_y, ios::out | ios::trunc | ios::binary);
+            save_vector_as_matrix("caminho_y", posicoes_y, cy);
+            cy.close();
+            cz.open(caminho_z, ios::out | ios::trunc | ios::binary);
+            save_vector_as_matrix("caminho_z", posicoes_z, cz);
+            cz.close();
+            // Mensagem final
             ROS_WARN("Chegamos ao fim, ta doendo sim...");
             ROS_WARN("Eu chego a perder a voz       ...");
             ROS_WARN("So resta chorar e se lamentar ...");
